@@ -1,0 +1,44 @@
+goal: "Clonar un repositorio de GitHub y generar un archivo con su estructura de directorios."
+version: "1.0"
+
+required_inputs:
+  - name: "repo_url"
+    description: "La URL completa del repositorio de GitHub a clonar (ej. https://github.com/user/repo.git)."
+    type: "string"
+    example: "https://github.com/invitado-org/agent-template.git"
+
+optional_inputs:
+  - name: "branch"
+    description: "La rama específica a clonar. Si no se especifica, se usará la rama por defecto."
+    type: "string"
+    example: "main"
+
+steps:
+  - step: 1
+    name: "Clone GitHub Repository"
+    description: "Clona el repositorio desde la URL proporcionada a un directorio temporal."
+    script_to_invoke: "execution/clone_repo.py"
+    inputs:
+      - name: "--repo-url"
+        value: "{{repo_url}}"
+      - name: "--branch"
+        value: "{{branch}}" # La capa de orquestación debe manejar si este valor es nulo/vacío.
+      - name: "--output-dir"
+        value: ".tmp/repo_{{run_id}}"
+    outputs:
+      - name: "local_repo_path"
+        description: "Ruta local al directorio donde se clonó el repositorio."
+        value: ".tmp/repo_{{run_id}}"
+
+expected_outputs:
+  - name: "final_deliverable"
+    description: "Un repositorio clonado en el directorio temporal `.tmp/`."
+    location: ".tmp/repo_{{run_id}}"
+
+edge_cases:
+  - case: "La URL del repositorio es inválida o el repositorio no existe."
+    recovery: "El script `clone_repo.py` debe fallar con un código de error específico. Notificar al usuario con el error y detener el flujo."
+  - case: "El repositorio es privado y requiere autenticación."
+    recovery: "El script `clone_repo.py` debe intentar usar credenciales (ej. un token de GitHub) desde el archivo `.env`. Si falla, notificar al usuario que se requiere autenticación y que debe configurar las credenciales. Detener el flujo."
+  - case: "La rama especificada no existe."
+    recovery: "El script `clone_repo.py` debe fallar. Notificar al usuario que la rama no fue encontrada y sugerir que verifique el nombre o lo omita para usar la rama por defecto."

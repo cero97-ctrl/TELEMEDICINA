@@ -1,0 +1,32 @@
+goal: "Extraer el contenido principal de una URL y guardarlo en un archivo de texto."
+version: "1.0"
+
+required_inputs:
+  - name: "target_url"
+    description: "La URL completa del sitio web a scrapear."
+    type: "string"
+    example: "https://es.wikipedia.org/wiki/Inteligencia_artificial"
+
+steps:
+  - step: 1
+    name: "Scrape a single site"
+    script_to_invoke: "execution/scrape_single_site.py"
+    inputs:
+      - name: "--url"
+        value: "{{target_url}}" # Placeholder for the input variable
+      - name: "--output-file"
+        value: ".tmp/scraped_content_{{run_id}}.txt" # Dynamic output file
+    outputs:
+      - name: "scraped_file_path"
+        description: "Ruta al archivo temporal con el contenido extraído."
+
+expected_outputs:
+  - name: "final_deliverable"
+    description: "Un archivo de texto (.txt) que contiene el cuerpo principal del contenido de la página web."
+    location: ".tmp/"
+
+edge_cases:
+  - case: "La URL devuelve un error 4xx o 5xx."
+    recovery: "Registrar el error, notificar al usuario con `execution/alert_user.py error` y detener el flujo. No reintentar."
+  - case: "El contenido de la página está vacío o no se puede parsear."
+    recovery: "Verificar si el sitio requiere JavaScript para renderizar. Si es así, registrar el hallazgo y sugerir el uso de un script de scraping avanzado (ej. con Selenium). Detener el flujo."
