@@ -38,7 +38,7 @@ def main():
     args = parser.parse_args()
 
     target_url = args.url
-    output_file = Path(args.output-file)
+    output_file = Path(args.output_file)
 
     # --- Fetching ---
     try:

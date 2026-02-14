@@ -4,6 +4,25 @@
 
 Este documento define un sistema de **arquitectura de tres capas** diseñado para optimizar la interacción entre la inteligencia artificial y la ejecución técnica, separando la lógica probabilística de la **ejecución determinista**. El marco de trabajo utiliza **directivas estandarizadas** como manuales de operación, una capa de **orquestación inteligente** para la toma de decisiones y scripts de Python especializados para realizar tareas concretas de forma fiable. El objetivo central es **maximizar la fiabilidad** del sistema mediante la validación constante, el manejo de errores autogenerativo y la actualización permanente de los procedimientos basados en el aprendizaje. Al actuar como un puente de **intermediación entre la intención y la implementación**, el agente asegura que la complejidad se gestione a través de herramientas reutilizables y procesos documentados que garantizan resultados consistentes.
 
+## Setup
+
+Para garantizar la reproducibilidad y evitar conflictos de dependencias, se recomienda utilizar un entorno virtual aislado (Conda).
+
+1.  **Crear el entorno:**
+    ```bash
+    conda create --name agent_env python=3.10 -y
+    ```
+
+2.  **Activar el entorno:**
+    ```bash
+    conda activate agent_env
+    ```
+
+3.  **Instalar dependencias:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
 ## 3-Layer Architecture
 
 El sistema utiliza una arquitectura de **3 capas** para separar responsabilidades y maximizar la fiabilidad.Los LLM son probabilísticos, mientras que la lógica de negocio suele ser determinista. Esta estructura equilibra ambos enfoques.
@@ -56,6 +75,11 @@ This is a list of the currently implemented workflows. You should select the mos
 
 *   **`get_github_repo_contents.yaml`**: "Clonar un repositorio de GitHub y generar un archivo con su estructura de directorios."
 *   **`scrape_website.yaml`**: "Extraer el contenido principal de una URL y guardarlo en un archivo de texto."
+*   **`research_topic.yaml`**: "Investigar sobre un tema determinado en la internet y guardar el resultado en un archivo de texto."
+*   **`save_memory.yaml`**: "Guardar un fragmento de información, aprendizaje o preferencia en la memoria a largo plazo."
+*   **`query_memory.yaml`**: "Recuperar información relevante de la memoria a largo plazo basada en una consulta semántica."
+*   **`list_memories.yaml`**: "Listar los recuerdos más recientes almacenados en la memoria a largo plazo sin realizar búsqueda semántica."
+*   **`delete_memory.yaml`**: "Eliminar un recuerdo específico de la memoria a largo plazo mediante su ID."
 
 ### Layer 3: Execution (execution/) — Hacer el trabajo
 

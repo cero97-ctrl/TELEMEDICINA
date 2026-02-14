@@ -1,0 +1,34 @@
+goal: "Investigar sobre un tema determinado en la internet y guardar el resultado en un archivo de texto."
+version: "1.0"
+
+required_inputs:
+  - name: "topic"
+    description: "El tema o consulta específica a investigar."
+    type: "string"
+    example: "Impacto de la computación cuántica en la criptografía"
+
+steps:
+  - step: 1
+    name: "Search and Compile Results"
+    script_to_invoke: "execution/research_topic.py"
+    inputs:
+      - name: "--query"
+        value: "{{topic}}"
+      - name: "--output-file"
+        value: ".tmp/research_{{run_id}}.txt"
+      - name: "--max-results"
+        value: "10"
+    outputs:
+      - name: "research_file_path"
+        description: "Ruta al archivo con los resultados de la investigación."
+
+expected_outputs:
+  - name: "final_deliverable"
+    description: "Un archivo de texto que contiene títulos, enlaces y resúmenes de los hallazgos."
+    location: ".tmp/research_{{run_id}}.txt"
+
+edge_cases:
+  - case: "La búsqueda no devuelve resultados."
+    recovery: "El script generará un archivo indicando la ausencia de resultados. Notificar al usuario y sugerir términos de búsqueda más generales."
+  - case: "Error de conexión o bloqueo (rate limit)."
+    recovery: "Esperar unos segundos y reintentar. Si persiste, notificar al usuario."

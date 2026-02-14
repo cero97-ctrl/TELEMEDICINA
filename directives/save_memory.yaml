@@ -1,0 +1,30 @@
+goal: "Guardar un fragmento de información, aprendizaje o preferencia en la memoria a largo plazo del agente."
+version: "1.0"
+
+required_inputs:
+  - name: "content"
+    description: "La información textual que se desea recordar (ej. solución a un error, preferencia del usuario)."
+    type: "string"
+
+optional_inputs:
+  - name: "category"
+    description: "Etiqueta para categorizar el recuerdo (ej. 'error_fix', 'project_info'). Por defecto: 'general'."
+    type: "string"
+    default: "general"
+
+steps:
+  - step: 1
+    name: "Persist Memory"
+    script_to_invoke: "execution/save_memory.py"
+    inputs:
+      - name: "--text"
+        value: "{{content}}"
+      - name: "--category"
+        value: "{{category}}"
+    outputs:
+      - name: "memory_id"
+        description: "ID único generado para el recuerdo guardado."
+
+expected_outputs:
+  - name: "confirmation"
+    description: "Confirmación JSON de que el dato ha sido vectorizado y guardado."

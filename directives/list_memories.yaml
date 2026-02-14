@@ -1,0 +1,23 @@
+goal: "Listar los recuerdos más recientes almacenados en la memoria a largo plazo sin realizar búsqueda semántica."
+version: "1.0"
+
+optional_inputs:
+  - name: "limit"
+    description: "Cantidad de recuerdos a recuperar. Por defecto: 10."
+    type: "integer"
+    default: "10"
+
+steps:
+  - step: 1
+    name: "Fetch Recent Memories"
+    script_to_invoke: "execution/list_memories.py"
+    inputs:
+      - name: "--limit"
+        value: "{{limit}}"
+    outputs:
+      - name: "recent_memories"
+        description: "Lista JSON de los recuerdos ordenados cronológicamente (más recientes primero)."
+
+expected_outputs:
+  - name: "memory_list"
+    description: "Listado de recuerdos recientes para auditoría o contexto general."

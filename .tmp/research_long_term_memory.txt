@@ -1,0 +1,44 @@
+Research Topic: como darle memoria a largo plazo a los agentes de IA y LLMs
+Found 10 results.
+========================================
+
+1. Desbloquea el verdadero poder del Agente de IA: Memoria a Largo …
+   URL: https://www.golan.ai/es/ai-news/desbloquear-el-poder-real-de-los-agentes-de-ia-memoria-a-largo-plazo-y-capacidades-de-mejora-automática-7LWTZqksmSg
+   Summary: Un aspecto clave que puede mejorar significativamente la experiencia del usuario de los agentes de IA es la capacidad de aprender y retener información a lo largo del tiempo, conocida como memoria a …
+--------------------
+2. Memoria a Largo Plazo para Agentes IA: Semántica y ... - YouTube
+   URL: /videos/riverview/relatedvideo?q=como+darle+memoria+a+largo+plazo+a+los+agentes+de+IA+y+LLMs&ru=/search?q=como+darle+memoria+a+largo+plazo+a+los+agentes+de+IA+y+LLMs&mmscn=vwrc&mid=6DC78B678D5D04AB699C6DC78B678D5D04AB699C&FORM=WRVORC&ntb=1&msockid=752d6467091d11f19e3da6c1f5e9cf27
+   Summary: 5 de ene. de 2026 · Aprende a implementar memoria a largo plazo en Agentes IA (memoria semántica + procedimental) paso a paso con Python y almacenamiento persistente.0:00 Introd...
+--------------------
+3. La Guía Definitiva de Agentes de IA - Gestión de Memoria y Contexto
+   URL: https://es.linkedin.com/pulse/la-guía-definitiva-de-agentes-ia-gestión-memoria-y-marc-mayol-orell-ss2yf
+   Summary: 5 de feb. de 2025 · Aunque a primera vista los agentes pueden parecer simples "respondedores de una sola vez", su verdadero potencial radica en su capacidad de recordar interacciones pasadas, …
+--------------------
+4. Un pequeño truco LLM: Dándole a los asistentes de IA memoria a …
+   URL: https://www.q2bstudio.com/nuestro-blog/457573/mejora-la-memoria-a-largo-plazo-de-los-asistentes-de-ia-con-estos-consejos-efectivos-y-practicos-aprende-como-potenciar-la-retencion-de-informacion-y-maximizar-el-rendimiento-de-tu-inteligencia-artificial
+   Summary: Mejora la memoria a largo plazo de los asistentes de IA con estos consejos efectivos y prácticos. Aprende cómo potenciar la retención de información y maximizar el rendimiento de tu inteligencia …
+--------------------
+5. ai-agents-for-beginners | 12 Lessons to Get Started Building AI Agents
+   URL: https://microsoft.github.io/ai-agents-for-beginners/translations/es/13-agent-memory/
+   Summary: La memoria es la base para crear agentes auto-mejorables que puedan ofrecer mejores experiencias a nuestros usuarios. En esta lección, exploraremos qué es la memoria para los Agentes de IA y cómo …
+--------------------
+6. Memoria en los Agentes de IA. La Clave Oculta para Automatizar con ...
+   URL: https://aiverso.com/memoria-agentes-ia-corto-largo-plazo-licitaciones/
+   Summary: 22 de mar. de 2025 · Hoy te explico por qué la memoria a corto y largo plazo es el músculo más infravalorado en los agentes de IA, y cómo aprovecharlo para optimizar tareas clave en licitaciones …
+--------------------
+7. Mem0: Cómo las LLMs Recuerdan Todo Sin Ralentizarse
+   URL: https://apidog.com/es/blog/mem0-memory-llm-agents-es/
+   Summary: 29 de jul. de 2025 · Sin embargo, ha persistido una limitación crítica: la incapacidad de mantener una memoria coherente a largo plazo durante interacciones prolongadas. Aquí es donde interviene …
+--------------------
+8. ¿Qué es la memoria del agente de IA? - IBM
+   URL: https://www.ibm.com/mx-es/think/topics/ai-agent-memory
+   Summary: La memoria a largo plazo (MLP) permite a los agentes de IA almacenar y recordar información en diferentes sesiones, lo que las hace más personalizadas e inteligentes a lo largo del tiempo.
+--------------------
+9. Construcción de agentes de IA listos para producción con memoria a ...
+   URL: https://paumanas.com/construyendo-agentes-ia-memoria-largo-plazo/
+   Summary: Plataformas como LangSmith Agent Builder y OpenAI AgentKit ofrecen aproximaciones visuales y APIs sencillas para construir prototipos con memoria a largo plazo.
+--------------------
+10. El S&P 500 previo a las cifras de inflación de Estados Unidos
+   URL: https://mx.investing.com/analysis/el-sp-500-previo-a-las-cifras-de-inflacion-de-estados-unidos-200486153
+   Summary: Análisis del Mercado por cubriendo: S&P 500, Microsoft Corporation, Alphabet Inc Class A, Micron Technology Inc. Lea los Análisis de Mercado de en Investing.com.
+--------------------

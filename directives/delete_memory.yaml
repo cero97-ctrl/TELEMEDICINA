@@ -1,0 +1,22 @@
+goal: "Eliminar un recuerdo específico de la memoria a largo plazo mediante su ID."
+version: "1.0"
+
+required_inputs:
+  - name: "memory_id"
+    description: "El ID único del recuerdo a eliminar (obtenido previamente mediante list_memories o query_memory)."
+    type: "string"
+
+steps:
+  - step: 1
+    name: "Delete Memory"
+    script_to_invoke: "execution/delete_memory.py"
+    inputs:
+      - name: "--memory-id"
+        value: "{{memory_id}}"
+    outputs:
+      - name: "deletion_status"
+        description: "Confirmación JSON de la eliminación."
+
+expected_outputs:
+  - name: "confirmation"
+    description: "Confirmación de que el recuerdo ha sido eliminado de la base de datos."

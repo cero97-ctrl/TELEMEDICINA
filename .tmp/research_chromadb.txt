@@ -1,0 +1,44 @@
+Research Topic: tutorial python chromadb memoria agentes ia implementacion codigo
+Found 10 results.
+========================================
+
+1. Crea tu propia IA Local con Python y ChromaDB paso a paso - Udemy
+   URL: https://www.udemy.com/course/crea-tu-propia-ia-local-con-python-y-chromadb-paso-a-paso/
+   Summary: En este curso práctico aprenderás a construir tu propio asistente inteligente con inteligencia artificial local utilizando Python, ChromaDB y Ollama.
+--------------------
+2. Memoria Episódica IA: Implementación Práctica con ChromaDB
+   URL: https://www.youtube.com/watch?v=K-oW9vN-BPk
+   Summary: 23 de dic. de 2019 · Descubre cómo implementar memoria episódica con código funcional. Almacena conversaciones completas en ChromaDB (base de datos vectorial). Usa embeddings para …
+--------------------
+3. GitHub - AmOrFeU86/episodic-memory-ai-agent
+   URL: https://github.com/AmOrFeU86/episodic-memory-ai-agent
+   Summary: ¿Qué es la Memoria Episódica? La memoria episódica permite al agente recordar eventos específicos de conversaciones anteriores, similar a cómo los humanos recordamos experiencias pasadas. A …
+--------------------
+4. Guía de Inicio Rápido para la Base de Datos Vectorial Chromadb en …
+   URL: https://www.alldevstack.com/es/chroma-vector-database/python-chromadb-qucikstart.html
+   Summary: Chroma es una base de datos vectorial integrada diseñada para aplicaciones, que puede ser fácilmente incorporada en nuestro código. La ventaja de Chroma radica en su simplicidad.
+--------------------
+5. Taller Agentes IA: Marco práctico en Python para agentes | Creati.ai
+   URL: https://creati.ai/es/ai-tools/ai_agent_workshop/
+   Summary: El taller Agentes IA ofrece código Python práctico y tutoriales en Jupyter para construir y ampliar agentes de IA autónomos con integración de herramientas, memoria y API de OpenAI.
+--------------------
+6. Memoria en Agentes de IA: Guía Completa para Personalización …
+   URL: https://www.asimov.cloud/blog/programacion-5/5-mejorando-la-personalizacion-en-agentes-de-ia-mediante-memoria-persistente-728
+   Summary: Aprende a implementar memoria persistente en agentes de IA, con arquitectura, ejemplos en Python y Node.js, comparativas, buenas prácticas, seguridad y tendencias 2025.
+--------------------
+7. Aprender sobre Chroma Vector Database - Study with GPT
+   URL: https://www.studywithgpt.com/es/tutorial/c51ewq
+   Summary: En este tutorial, aprenderás sobre Chroma, una base de datos vectorial de código abierto que ha sido diseñada específicamente para aplicaciones de inteligencia artificial (IA) y modelos de lenguaje de …
+--------------------
+8. Crea tu propia IA Local con Python y ChromaDB paso a paso ...
+   URL: /videos/riverview/relatedvideo?q=tutorial+python+chromadb+memoria+agentes+ia+implementacion+codigo&ru=/search?q=tutorial+python+chromadb+memoria+agentes+ia+implementacion+codigo&mmscn=vwrc&mid=3E709AFA6801C1439A843E709AFA6801C1439A84&FORM=WRVORC&ntb=1&msockid=a40acd38092411f1825c02f66df65c59
+   Summary: 28 de jul. de 2025 · En este curso práctico aprenderás a construir tu propio asistente inteligente con inteligencia artificial local utilizando Python, ChromaDB y Ollama.
+--------------------
+9. Cognee: Memoria de un agente IA en 5 líneas de código | AIBit
+   URL: https://aibit.im/es/blog/post/cognee-ai-agent-memory-in-5-lines-of-code
+   Summary: Cognee simplifica y agiliza la creación de memoria para agentes de IA. Este proyecto de código abierto ofrece una solución potente y escalable para la memoria de IA, que reemplaza a los sistemas RAG.
+--------------------
+10. Crea Agentes de IA con el ADK de Código Abierto de Google
+   URL: https://aibit.im/es/blog/post/build-ai-agents-with-google-s-open-source-adk
+   Summary: Explore el kit de desarrollo de agentes de código abierto de Google (ADK) para Python. Cree, evalúe e implemente agentes de IA sofisticados con un marco flexible y enfocado en el código. Conozca la …
+--------------------

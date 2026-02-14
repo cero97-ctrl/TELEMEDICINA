@@ -1,0 +1,24 @@
+goal: "Recuperar información relevante de la memoria a largo plazo basada en una consulta semántica."
+version: "1.0"
+
+required_inputs:
+  - name: "query"
+    description: "La pregunta, tema o contexto sobre el cual se busca información."
+    type: "string"
+
+steps:
+  - step: 1
+    name: "Semantic Search"
+    script_to_invoke: "execution/query_memory.py"
+    inputs:
+      - name: "--query"
+        value: "{{query}}"
+      - name: "--n-results"
+        value: "5"
+    outputs:
+      - name: "memory_results"
+        description: "Lista JSON de recuerdos relevantes encontrados."
+
+expected_outputs:
+  - name: "knowledge_context"
+    description: "Información recuperada que puede ser usada para responder al usuario o guiar decisiones."
