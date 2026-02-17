@@ -1,0 +1,17 @@
+goal: "Leer el contenido de una página web y generar un resumen."
+required_inputs:
+  - name: "url"
+    description: "La dirección web a analizar."
+steps:
+  - step: 1
+    script_to_invoke: "execution/scrape_single_site.py"
+    inputs:
+      - name: "--url"
+        value: "{{url}}"
+      - name: "--output-file"
+        value: ".tmp/scraped_content.txt"
+  - step: 2
+    script_to_invoke: "execution/chat_with_llm.py"
+    inputs:
+      - name: "--prompt"
+        value: "Resume este contenido: {{FILE:.tmp/scraped_content.txt}}"

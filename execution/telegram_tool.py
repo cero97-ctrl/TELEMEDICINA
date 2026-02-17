@@ -12,16 +12,18 @@ load_dotenv()
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+ALLOWED_USERS = os.getenv("TELEGRAM_ALLOWED_USERS", CHAT_ID or "").strip()
 OFFSET_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".tmp", "telegram_offset.txt")
 
-def send_message(text):
+def send_message(text, target_chat_id=None):
     """Envía un mensaje al chat configurado."""
-    if not TOKEN or not CHAT_ID:
-        print(json.dumps({"status": "error", "message": "Faltan credenciales TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID en .env"}))
+    dest_id = target_chat_id or CHAT_ID
+    if not TOKEN or not dest_id:
+        print(json.dumps({"status": "error", "message": "Faltan credenciales o Chat ID destino."}))
         sys.exit(1)
     
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": text, "parse_mode": "Markdown"}
+    payload = {"chat_id": dest_id, "text": text, "parse_mode": "Markdown"}
     
     try:
         response = requests.post(url, json=payload, timeout=10)
@@ -71,21 +73,26 @@ def check_messages():
                 
                 # Seguridad: Filtrar por CHAT_ID si está definido para ignorar extraños
                 msg_chat_id = str(result.get("message", {}).get("chat", {}).get("id", ""))
-                if CHAT_ID and msg_chat_id != str(CHAT_ID):
-                    continue
+                
+                # Si ALLOWED_USERS es "*", permite a todos. Si no, verifica la lista.
+                if ALLOWED_USERS != "*":
+                    allowed_list = [u.strip() for u in ALLOWED_USERS.split(",") if u.strip()]
+                    if msg_chat_id not in allowed_list:
+                        print(f"⚠️ Ignorando mensaje de {msg_chat_id} (No autorizado. Permitidos: '{ALLOWED_USERS}')", file=sys.stderr)
+                        continue
                     
                 message = result.get("message", {})
                 text = message.get("text", "")
                 photo = message.get("photo")
                 
                 if text:
-                    messages.append(text)
+                    messages.append(f"{msg_chat_id}|{text}")
                 elif photo:
                     # Telegram envía varias resoluciones, la última es la mejor
                     file_id = photo[-1]["file_id"]
                     caption = message.get("caption", "") or ""
                     # Usamos un prefijo especial para identificar fotos en el listener
-                    messages.append(f"__PHOTO__:{file_id}|||{caption}")
+                    messages.append(f"{msg_chat_id}|__PHOTO__:{file_id}|||{caption}")
         
         # Guardar nuevo offset para no repetir mensajes
         if max_update_id > offset:
@@ -163,13 +170,14 @@ def main():
     parser = argparse.ArgumentParser(description="Herramienta de integración con Telegram.")
     parser.add_argument("--action", choices=["send", "check", "get-id", "download"], required=True, help="Acción a realizar.")
     parser.add_argument("--message", help="Mensaje a enviar (requerido para --action send).")
+    parser.add_argument("--chat-id", help="ID del chat destino (opcional, por defecto usa el del .env).")
     parser.add_argument("--file-id", help="ID del archivo a descargar (para --action download).")
     parser.add_argument("--dest", help="Ruta destino (para --action download).")
     
     args = parser.parse_args()
     
     if args.action == "send":
-        send_message(args.message or "Notificación vacía")
+        send_message(args.message or "Notificación vacía", args.chat_id)
     elif args.action == "check":
         check_messages()
     elif args.action == "get-id":

@@ -21,6 +21,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Nuevo comando `/memory` en `run_agent.py` para consultar la memoria desde el CLI principal.
 - Mejora de RAG en `/investigar`: ahora el agente cruza los resultados de búsqueda con su memoria interna antes de resumir.
 - Mejora en logs de `chat_with_llm.py`: ahora muestra una previsualización del recuerdo recuperado para facilitar la depuración.
+- **Optimización RAG**: Implementado argumento `--memory-query` en `chat_with_llm.py` para separar la búsqueda en memoria del prompt al LLM, solucionando problemas de ruido en `/investigar`.
+- **Mejora de UX**: `listen_telegram.py` ahora reporta el error específico del LLM en lugar de un mensaje genérico.
+- Nueva capacidad: Comando `/resumir [url]` para análisis de webs (incluye `scrape_single_site.py`).
+- **Arquitectura "Memory-First"**: El chat general ahora consulta la memoria local antes de llamar a un LLM externo, permitiendo respuestas offline y más rápidas.
+- **Bug Fix**: Implementado argumento `--memory-only` en `chat_with_llm.py` que faltaba en la versión anterior.
+- **Bug Fix (API)**: Corregida la lista de modelos de fallback de Gemini en `chat_with_llm.py` para evitar errores 404 con modelos no soportados.
+- **Mejora RAG**: Deduplicación automática de recuerdos en `chat_with_llm.py` para evitar respuestas repetitivas.
+- **Mejora UX**: El comando `/memorias` en Telegram ahora muestra la hora exacta del recuerdo para facilitar la auditoría.
+- **Soporte Multi-Usuario**: `telegram_tool.py` y `listen_telegram.py` actualizados para responder a múltiples usuarios simultáneamente (Mente Colmena).
 
 ## [1.0.0] - 2026-02-16
 ### Añadido

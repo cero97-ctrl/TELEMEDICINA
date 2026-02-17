@@ -70,9 +70,17 @@ def get_memory_context(query):
         
         documents = results.get('documents', [[]])[0]
         if documents:
-            preview = documents[0][:60] + "..." if len(documents[0]) > 60 else documents[0]
-            print(f"🧠 [RAG] Contexto inyectado ({len(documents)} items): '{preview}'", file=sys.stderr)
-            return "\n".join([f"- {doc}" for doc in documents])
+            # Deduplicar resultados preservando el orden
+            seen = set()
+            unique_docs = []
+            for doc in documents:
+                if doc not in seen:
+                    unique_docs.append(doc)
+                    seen.add(doc)
+            
+            preview = unique_docs[0][:60] + "..." if len(unique_docs[0]) > 60 else unique_docs[0]
+            print(f"🧠 [RAG] Contexto inyectado ({len(unique_docs)} items): '{preview}'", file=sys.stderr)
+            return "\n".join([f"- {doc}" for doc in unique_docs])
         else:
             print("🧠 [RAG] No se encontraron recuerdos relevantes para esta consulta.", file=sys.stderr)
     except Exception as e:
@@ -163,7 +171,7 @@ def chat_gemini(messages, model="gemini-flash-latest"):
         # Estrategia de Fallback: Intentar modelos alternativos si el principal falla
         models_to_try = [model]
         # Lista de modelos seguros para probar en orden si el principal falla
-        fallbacks = ["gemini-1.5-flash", "gemini-pro", "gemini-flash-latest"]
+        fallbacks = ["gemini-1.5-flash", "gemini-pro"]
         for fb in fallbacks:
             if fb != model:
                 models_to_try.append(fb)
@@ -190,7 +198,21 @@ def main():
     parser = argparse.ArgumentParser(description="Enviar un prompt a un LLM (OpenAI/Anthropic).")
     parser.add_argument("--prompt", required=True, help="El mensaje para el LLM.")
     parser.add_argument("--provider", choices=["openai", "anthropic", "gemini"], help="Proveedor de IA.")
+    parser.add_argument("--memory-query", help="Texto específico para buscar en memoria (si es diferente al prompt).")
+    parser.add_argument("--memory-only", action="store_true", help="Solo consulta la memoria y devuelve el resultado directo sin llamar al LLM.")
     args = parser.parse_args()
+
+    # --- MODO MEMORY-ONLY ---
+    if args.memory_only:
+        memory_context = get_memory_context(args.prompt)
+        if memory_context:
+            # Si se encuentra algo, se devuelve directamente formateado.
+            result = {"content": f"🧠 Según mi memoria:\n\n{memory_context}"}
+        else:
+            # Si no, se devuelve un error especial para que el orquestador sepa que debe continuar.
+            result = {"error": "no_memory_found"}
+        print(json.dumps(result))
+        return
 
     # Gestión de historial
     if args.prompt.strip().lower() == "/clear":
@@ -207,11 +229,17 @@ def main():
     history.append({"role": "user", "content": args.prompt})
 
     # --- RAG: Inyección de Memoria ---
+    # Si se proporciona --memory-query, usarla para la búsqueda. Si no, usar el prompt completo.
+    query_for_memory = args.memory_query if args.memory_query else args.prompt
+    
+    if args.memory_query:
+        print(f"🧠 [RAG] Usando query optimizada: '{query_for_memory}'", file=sys.stderr)
+
     # Creamos una copia de los mensajes para enviar al LLM con el contexto inyectado,
     # pero SIN ensuciar el historial guardado en disco.
     messages_for_llm = [dict(msg) for msg in history] # Deep copy simple
     
-    memory_context = get_memory_context(args.prompt)
+    memory_context = get_memory_context(query_for_memory)
     if memory_context:
         # Inyectamos el contexto en el último mensaje del usuario
         last_msg = messages_for_llm[-1]

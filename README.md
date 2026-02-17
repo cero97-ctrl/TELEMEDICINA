@@ -80,10 +80,26 @@ Este framework permite controlar al agente desde tu móvil usando Telegram.
     TELEGRAM_CHAT_ID=tu_id_numerico_aqui
     ```
 
+    **Opcional: Multi-Usuario**
+    Por defecto, el bot solo te responde a ti. Para permitir que otros (ej. estudiantes) lo usen:
+    ```env
+    # Opción A: Permitir a TODO el mundo (Público)
+    TELEGRAM_ALLOWED_USERS=*
+    # Opción B: Lista blanca (IDs separados por comas)
+    # TELEGRAM_ALLOWED_USERS=12345678,87654321
+    ```
+
+### ¿Cómo encontrar el Bot?
+A veces el buscador de Telegram tarda en indexar bots nuevos por su nombre ("MiAgenteIA").
+Para asegurar que tus estudiantes lo encuentren:
+1.  Diles que busquen por el **usuario exacto** (ej. `@CERO97_BOT`).
+2.  O mejor aún, envíales el enlace directo: `https://t.me/CERO97_BOT`
+
 ### Comandos Disponibles
 Una vez activado el modo escucha (`/telegram` en el CLI), puedes usar:
 - **Chat normal**: Habla con el agente para consultas generales.
 - **`/investigar [tema]`**: El agente buscará en internet y te dará un resumen (ej. `/investigar últimas noticias de IA`).
+- **`/resumir [url]`**: Lee una web y te dice de qué trata.
 - **`/recordar [texto]`**: Guarda una nota en la memoria a largo plazo del agente.
 - **`/memorias`**: Muestra una lista de los últimos recuerdos almacenados.
 - **`/olvidar [ID]`**: Elimina un recuerdo específico usando su ID.
