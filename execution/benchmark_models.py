@@ -8,7 +8,7 @@ import json
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from chat_with_llm import chat_openai, chat_anthropic, chat_gemini
+    from chat_with_llm import chat_openai, chat_anthropic, chat_gemini, chat_groq
 except ImportError:
     print("Error: No se pudo importar chat_with_llm.py", file=sys.stderr)
     sys.exit(1)
@@ -62,6 +62,14 @@ def main():
             results.append(("Anthropic (Sonnet)", t))
     else:
         print("⚪ Anthropic: Skipped (No API Key)")
+
+    # 4. Groq
+    if os.getenv("GROQ_API_KEY"):
+        t = measure_latency("Groq", chat_groq, "llama-3.3-70b-versatile")
+        if t:
+            results.append(("Groq (Llama 3)", t))
+    else:
+        print("⚪ Groq: Skipped (No API Key)")
 
     print("\n📊 RESULTADOS FINALES (Menor es mejor)")
     print("----------------------------------------")

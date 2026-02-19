@@ -58,7 +58,7 @@ def check_messages():
     params = {"offset": offset, "limit": 10, "timeout": 5}
     
     try:
-        response = requests.get(url, params=params, timeout=10)
+        response = requests.get(url, params=params, timeout=20)
         response.raise_for_status()
         data = response.json()
         
@@ -102,6 +102,10 @@ def check_messages():
                 
         print(json.dumps({"status": "success", "messages": messages}))
         
+    except requests.exceptions.ReadTimeout:
+        # Timeout de lectura es normal en polling; devolvemos lista vacía para reintentar silenciosamente
+        print(json.dumps({"status": "success", "messages": []}))
+
     except Exception as e:
         print(json.dumps({"status": "error", "message": str(e)}))
         sys.exit(1)

@@ -1,0 +1,108 @@
+\documentclass{beamer}
+\usetheme{Madrid}
+\usecolortheme{dolphin}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{listings}
+
+% Configuración de metadatos
+\title{Avances del Proyecto: Agente de IA Autónomo}
+\subtitle{Arquitectura, Memoria y Capacidades Multimodales}
+\author{Prof. César Rodríguez \and Gemini Code Assist}
+\institute{Equipo de Investigación 'Tecnología Venezolana'}
+\date{\today}
+
+\begin{document}
+
+% Diapositiva de Título
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% Índice
+\begin{frame}{Contenido}
+    \tableofcontents
+\end{frame}
+
+% Sección 1: Visión General
+\section{Visión y Objetivo}
+\begin{frame}{Objetivo del Proyecto}
+    \begin{block}{Misión}
+        Desarrollar un Agente de IA autónomo, residente en infraestructura local (Linux), capaz de apoyar en tareas de investigación académica y gestión de conocimiento para el equipo.
+    \end{block}
+    \vspace{0.5cm}
+    \textbf{Principios de Diseño:}
+    \begin{itemize}
+        \item \textbf{Privacidad:} Ejecución y memoria locales.
+        \item \textbf{Fiabilidad:} Separación entre razonamiento (LLM) y ejecución (Código).
+        \item \textbf{Velocidad:} Uso de motores de inferencia de alta velocidad (Groq).
+    \end{itemize}
+\end{frame}
+
+% Sección 2: Arquitectura
+\section{Arquitectura Técnica}
+\begin{frame}{Arquitectura de 3 Capas}
+    Hemos implementado un diseño robusto que evita alucinaciones y errores comunes:
+    \vspace{0.5cm}
+    \begin{enumerate}
+        \item \textbf{Capa 1: Directivas (YAML)} \\
+        \textit{'El Manual de Operaciones'.} Define qué se debe hacer (SOPs).
+        
+        \item \textbf{Capa 2: Orquestación (LLM)} \\
+        \textit{'El Cerebro'.} Toma decisiones, enruta tareas y gestiona errores. Actualmente potenciado por \textbf{Llama 3 (vía Groq)}.
+        
+        \item \textbf{Capa 3: Ejecución (Python)} \\
+        \textit{'Las Manos'.} Scripts deterministas para tareas específicas (búsqueda web, manejo de archivos, cálculos).
+    \end{enumerate}
+\end{frame}
+
+% Sección 3: Capacidades
+\section{Capacidades Implementadas}
+\begin{frame}{Capacidades Clave}
+    \begin{itemize}
+        \item \textbf{Memoria a Largo Plazo (RAG):} 
+        Uso de \textit{ChromaDB} para recordar datos, preferencias y soluciones a errores entre sesiones.
+        
+        \item \textbf{Interfaz Telegram Completa:}
+        \begin{itemize}
+            \item Comandos de voz (transcripción automática).
+            \item Análisis de imágenes (Visión por Computadora).
+            \item Gestión remota del servidor.
+        \end{itemize}
+        
+        \item \textbf{Velocidad Extrema:}
+        Integración de \textbf{Groq} logrando respuestas en \textbf{0.6 segundos} (vs 2.6s de modelos estándar).
+        
+        \item \textbf{Sistema de Respaldo (Fallback):}
+        Si Groq falla, el sistema cambia automáticamente a Google Gemini sin interrupción.
+    \end{itemize}
+\end{frame}
+
+% Sección 4: Demo y Comandos
+\section{Interacción y Demo}
+\begin{frame}{Comandos Disponibles}
+    El agente responde a comandos naturales y estructurados:
+    \vspace{0.3cm}
+    \begin{description}
+        \item[/investigar] Realiza búsquedas en la web y genera resúmenes.
+        \item[/recordar] Guarda información en la base de datos vectorial.
+        \item[/status] Reporte de salud del servidor (CPU, RAM, Disco).
+        \item[/modo] Cambio de personalidad (Serio, Sarcástico, Pirata...).
+        \item[/reiniciar] Limpia el contexto y restablece la identidad.
+    \end{description}
+\end{frame}
+
+% Conclusión
+\section{Próximos Pasos}
+\begin{frame}{Hoja de Ruta}
+    \begin{itemize}
+        \item Ampliación de herramientas de ejecución (Sandbox de código).
+        \item Integración con calendarios y herramientas de productividad.
+        \item Refinamiento del sistema de auto-curación de errores.
+    \end{itemize}
+    \vspace{1cm}
+    \centering \Large \textbf{¡Gracias!}
+\end{frame}
+
+\end{document}

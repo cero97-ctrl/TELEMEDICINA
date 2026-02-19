@@ -87,11 +87,12 @@ def get_memory_context(query):
         print(f"❌ [RAG] Error al consultar memoria: {e}", file=sys.stderr)
     return None
 
-def chat_openai(messages, model="gpt-4o-mini"):
+def chat_openai(messages, model="gpt-4o-mini", system_instruction=None):
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         return {"error": "Falta OPENAI_API_KEY en .env"}
 
+    sys_msg = system_instruction or "Eres un asistente de IA útil actuando como la capa de Orquestación en una arquitectura de 3 capas."
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
@@ -99,7 +100,7 @@ def chat_openai(messages, model="gpt-4o-mini"):
     data = {
         "model": model,
         "messages": [
-            {"role": "system", "content": "Eres un asistente de IA útil actuando como la capa de Orquestación en una arquitectura de 3 capas."}
+            {"role": "system", "content": sys_msg}
         ] + messages,
         "temperature": 0.7
     }
@@ -113,7 +114,7 @@ def chat_openai(messages, model="gpt-4o-mini"):
         return {"error": str(e)}
 
 
-def chat_anthropic(messages, model="claude-3-5-sonnet-20240620"):
+def chat_anthropic(messages, model="claude-3-5-sonnet-20240620", system_instruction=None):
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         return {"error": "Falta ANTHROPIC_API_KEY en .env"}
@@ -123,11 +124,12 @@ def chat_anthropic(messages, model="claude-3-5-sonnet-20240620"):
         "anthropic-version": "2023-06-01",
         "content-type": "application/json"
     }
+    sys_msg = system_instruction or "Eres un asistente de IA útil actuando como la capa de Orquestación en una arquitectura de 3 capas."
     data = {
         "model": model,
         "max_tokens": 1024,
         "messages": messages,
-        "system": "Eres un asistente de IA útil actuando como la capa de Orquestación en una arquitectura de 3 capas."
+        "system": sys_msg
     }
 
     try:
@@ -138,8 +140,46 @@ def chat_anthropic(messages, model="claude-3-5-sonnet-20240620"):
     except Exception as e:
         return {"error": str(e)}
 
+def chat_groq(messages, model="llama-3.3-70b-versatile", system_instruction=None):
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return {"error": "Falta GROQ_API_KEY en .env"}
 
-def chat_gemini(messages, model="gemini-flash-latest"):
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    # Sanitizar mensajes para evitar errores de formato (ej. campos extra o nulos)
+    clean_messages = []
+    for m in messages:
+        clean_messages.append({
+            "role": m.get("role", "user"),
+            "content": str(m.get("content", ""))
+        })
+
+    sys_msg = system_instruction or "Eres un asistente de IA útil (Llama 3 en Groq) actuando como la capa de Orquestación. Si en el historial ves que te llamaste 'Gemini', ignóralo; ahora eres Llama 3."
+    # Groq usa un endpoint compatible con OpenAI
+    data = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": sys_msg}
+        ] + clean_messages,
+        "temperature": 0.7
+    }
+
+    try:
+        resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=30)
+        
+        if not resp.ok:
+            return {"error": f"Groq API Error ({resp.status_code}): {resp.text}"}
+            
+        result = resp.json()
+        return {"content": result['choices'][0]['message']['content']}
+    except Exception as e:
+        return {"error": str(e)}
+
+def chat_gemini(messages, model="gemini-flash-latest", system_instruction=None):
     if not genai:
         return {"error": "Librería 'google-generativeai' no instalada. Ejecuta: pip install -r requirements.txt"}
 
@@ -151,7 +191,7 @@ def chat_gemini(messages, model="gemini-flash-latest"):
         genai.configure(api_key=api_key)
 
         # Preparar historial y system instruction
-        system_instruction = "Eres Gemini, un modelo de IA de Google, actuando como la capa de Orquestación en una arquitectura de 3 capas. Identifícate siempre como Gemini/Google si te preguntan."
+        sys_msg = system_instruction or "Eres Gemini, un modelo de IA de Google, actuando como la capa de Orquestación en una arquitectura de 3 capas. Identifícate siempre como Gemini/Google si te preguntan."
         history = []
 
         for msg in messages:
@@ -179,7 +219,7 @@ def chat_gemini(messages, model="gemini-flash-latest"):
         last_error = None
         for target_model in models_to_try:
             try:
-                model_instance = genai.GenerativeModel(model_name=target_model, system_instruction=system_instruction)
+                model_instance = genai.GenerativeModel(model_name=target_model, system_instruction=sys_msg)
                 chat = model_instance.start_chat(history=history)
                 response = chat.send_message(last_message["parts"][0])
                 return {"content": response.text}
@@ -197,9 +237,10 @@ def chat_gemini(messages, model="gemini-flash-latest"):
 def main():
     parser = argparse.ArgumentParser(description="Enviar un prompt a un LLM (OpenAI/Anthropic).")
     parser.add_argument("--prompt", required=True, help="El mensaje para el LLM.")
-    parser.add_argument("--provider", choices=["openai", "anthropic", "gemini"], help="Proveedor de IA.")
+    parser.add_argument("--provider", choices=["openai", "anthropic", "gemini", "groq"], help="Proveedor de IA.")
     parser.add_argument("--memory-query", help="Texto específico para buscar en memoria (si es diferente al prompt).")
     parser.add_argument("--memory-only", action="store_true", help="Solo consulta la memoria y devuelve el resultado directo sin llamar al LLM.")
+    parser.add_argument("--system", help="Instrucción del sistema (personalidad).")
     args = parser.parse_args()
 
     # --- MODO MEMORY-ONLY ---
@@ -243,26 +284,59 @@ def main():
     if memory_context:
         # Inyectamos el contexto en el último mensaje del usuario
         last_msg = messages_for_llm[-1]
-        last_msg['content'] = f"CONTEXTO DE MEMORIA (Recuerdos relevantes):\n{memory_context}\n\n---\nPREGUNTA DEL USUARIO:\n{args.prompt}"
+        last_msg['content'] = f"""Usa el siguiente CONTEXTO DE MEMORIA solo si es directamente relevante para la PREGUNTA DEL USUARIO. Si no es relevante, ignóralo por completo.
 
-    # Selección automática de proveedor si no se especifica
-    provider = args.provider
-    if not provider:
-        if os.getenv("GOOGLE_API_KEY") and os.getenv("GOOGLE_API_KEY").strip():
-            provider = "gemini"
-        elif os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_API_KEY").strip():
-            provider = "openai"
-        elif os.getenv("ANTHROPIC_API_KEY") and os.getenv("ANTHROPIC_API_KEY").strip():
-            provider = "anthropic"
-        else:
-            provider = "openai"  # Default
+CONTEXTO DE MEMORIA (Recuerdos relevantes):
+{memory_context}
 
-    if provider == "openai":
-        result = chat_openai(messages_for_llm)
-    elif provider == "anthropic":
-        result = chat_anthropic(messages_for_llm)
+---
+PREGUNTA DEL USUARIO:
+{args.prompt}"""
+
+    # Definir lista de proveedores a intentar en orden de prioridad
+    providers_to_try = []
+    
+    if args.provider:
+        # Si el usuario fuerza uno, solo intentamos ese
+        providers_to_try.append(args.provider)
     else:
-        result = chat_gemini(messages_for_llm)
+        # Orden de preferencia: Groq (Rápido) -> Gemini (Backup robusto) -> Otros
+        if os.getenv("GROQ_API_KEY") and os.getenv("GROQ_API_KEY").strip():
+            providers_to_try.append("groq")
+        if os.getenv("GOOGLE_API_KEY") and os.getenv("GOOGLE_API_KEY").strip():
+            providers_to_try.append("gemini")
+        if os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_API_KEY").strip():
+            providers_to_try.append("openai")
+        if os.getenv("ANTHROPIC_API_KEY") and os.getenv("ANTHROPIC_API_KEY").strip():
+            providers_to_try.append("anthropic")
+            
+    if not providers_to_try:
+        print(json.dumps({"error": "No hay API Keys configuradas en .env"}))
+        return
+
+    result = {}
+    for provider in providers_to_try:
+        try:
+            if provider == "openai":
+                result = chat_openai(messages_for_llm, system_instruction=args.system)
+            elif provider == "anthropic":
+                result = chat_anthropic(messages_for_llm, system_instruction=args.system)
+            elif provider == "groq":
+                result = chat_groq(messages_for_llm, system_instruction=args.system)
+            elif provider == "gemini":
+                result = chat_gemini(messages_for_llm, system_instruction=args.system)
+            
+            # Si tuvimos éxito (hay contenido y no error), salimos del bucle
+            if "content" in result and "error" not in result:
+                break
+            
+            # Si falló, logueamos en stderr (para no ensuciar el JSON de stdout) y seguimos
+            error_msg = result.get("error", "Error desconocido")
+            print(f"⚠️ Proveedor '{provider}' falló: {error_msg}. Intentando siguiente...", file=sys.stderr)
+            
+        except Exception as e:
+            print(f"⚠️ Excepción crítica en '{provider}': {e}. Intentando siguiente...", file=sys.stderr)
+            result = {"error": str(e)}
 
     if "content" in result:
         history.append({"role": "assistant", "content": result["content"]})

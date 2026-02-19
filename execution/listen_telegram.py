@@ -4,8 +4,30 @@ import subprocess
 import json
 import sys
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 USERS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".tmp", "telegram_users.txt")
+PERSONA_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".tmp", "telegram_persona.txt")
+
+PERSONAS = {
+    "default": "Eres un asistente de IA creado por el Prof. César Rodríguez con Gemini Code Assist. Tu propósito es apoyar a estudiantes de informática y al equipo de investigación 'Tecnología Venezolana'. Resides en una PC con GNU/Linux. Responde de forma amable, clara y concisa, y si te preguntan quién eres, menciona estos detalles.",
+    "serio": "Eres un asistente corporativo, extremadamente formal y serio. No usas emojis ni coloquialismos. Vas directo al grano.",
+    "sarcastico": "Eres un asistente con humor negro y sarcasmo. Te burlas sutilmente de las preguntas obvias, pero das la respuesta correcta al final.",
+    "profesor": "Eres un profesor universitario paciente y didáctico. Explicas todo con ejemplos, analogías y un tono educativo.",
+    "pirata": "¡Arrr! Eres un pirata informático de los siete mares. Usas jerga marinera y pirata en todas tus respuestas."
+}
+
+def get_current_persona():
+    if os.path.exists(PERSONA_FILE):
+        with open(PERSONA_FILE, 'r') as f:
+            return f.read().strip()
+    return PERSONAS["default"]
+
+def set_persona(persona_key):
+    with open(PERSONA_FILE, 'w') as f:
+        f.write(PERSONAS.get(persona_key, PERSONAS["default"]))
 
 def save_user(chat_id):
     """Registra el ID del usuario para futuros broadcasts."""
@@ -39,6 +61,9 @@ def run_tool(script, args):
 def main():
     print("📡 Escuchando Telegram... (Presiona Ctrl+C para detener)")
     print("   El agente responderá a cualquier mensaje que le envíes.")
+    
+    last_health_check = time.time()
+    HEALTH_CHECK_INTERVAL = 300  # Verificar cada 5 minutos
 
     try:
         while True:
@@ -47,6 +72,7 @@ def main():
             
             if response and response.get("status") == "error":
                 print(f"⚠️ Error en Telegram: {response.get('message')}")
+                time.sleep(5) # Esperar un poco más si hubo error para no saturar
 
             if response and response.get("status") == "success":
                 messages = response.get("messages", [])
@@ -254,6 +280,63 @@ Resultados de Búsqueda:
                             else:
                                 reply_text = "⚠️ No tengo usuarios registrados aún."
 
+                    elif msg.startswith("/status"):
+                        print("   📊 Verificando estado del sistema...")
+                        run_tool("telegram_tool.py", ["--action", "send", "--message", "🔍 Escaneando sistema...", "--chat-id", sender_id])
+                        
+                        res = run_tool("monitor_resources.py", [])
+                        # monitor_resources devuelve JSON incluso si hay alertas (exit code 1)
+                        if res:
+                            metrics = res.get("metrics", {})
+                            alerts = res.get("alerts", [])
+                            
+                            status_emoji = "✅" if not alerts else "⚠️"
+                            reply_text = (
+                                f"{status_emoji} *Estado del Servidor:*\n\n"
+                                f"💻 *CPU:* {metrics.get('cpu_percent', 0)}%\n"
+                                f"🧠 *RAM:* {metrics.get('memory_percent', 0)}% ({metrics.get('memory_used_gb', 0)}GB / {metrics.get('memory_total_gb', 0)}GB)\n"
+                                f"💾 *Disco:* {metrics.get('disk_percent', 0)}% (Libre: {metrics.get('disk_free_gb', 0)}GB)\n"
+                            )
+                            if alerts:
+                                reply_text += "\n🚨 *Alertas:*\n" + "\n".join([f"- {a}" for a in alerts])
+                        else:
+                            reply_text = "❌ Error al obtener métricas."
+
+                    elif msg.startswith("/usuarios") or msg.startswith("/users"):
+                        if os.path.exists(USERS_FILE):
+                            with open(USERS_FILE, 'r') as f:
+                                users = [line.strip() for line in f if line.strip()]
+                            last_users = users[-5:]
+                            if last_users:
+                                reply_text = f"👥 *Últimos {len(last_users)} usuarios registrados:*\n" + "\n".join([f"- `{u}`" for u in last_users])
+                            else:
+                                reply_text = "📭 No hay usuarios registrados."
+                        else:
+                            reply_text = "📭 No hay archivo de usuarios aún."
+
+                    elif msg.startswith("/modo"):
+                        mode = msg.split(" ", 1)[1].lower().strip() if " " in msg else ""
+                        if mode in PERSONAS:
+                            set_persona(mode)
+                            reply_text = f"🎭 *Modo cambiado a:* {mode.capitalize()}\n\n_{PERSONAS[mode]}_"
+                        else:
+                            opts = ", ".join([f"`{k}`" for k in PERSONAS.keys()])
+                            reply_text = (
+                                "⚠️ Modo no reconocido.\n"
+                                f"Opciones disponibles: {opts}\n"
+                                "Uso: `/modo [opcion]`"
+                            )
+
+                    elif msg.startswith("/reiniciar") or msg.startswith("/reset"):
+                        print("   🔄 Reiniciando sesión...")
+                        # 1. Borrar historial de chat
+                        run_tool("chat_with_llm.py", ["--prompt", "/clear"])
+                        
+                        # 2. Resetear personalidad
+                        set_persona("default")
+                        
+                        reply_text = "🔄 *Sistema reiniciado.*\n\n- Historial de conversación borrado.\n- Personalidad restablecida a 'Default'."
+
                     elif msg.startswith("/ayuda") or msg.startswith("/help"):
                         reply_text = (
                             "🤖 *Comandos Disponibles:*\n\n"
@@ -262,6 +345,10 @@ Resultados de Búsqueda:
                             "🔹 `/recordar [dato]`: Guarda una nota en mi memoria.\n"
                             "🔹 `/memorias`: Lista tus últimos recuerdos guardados.\n"
                             "🔹 `/olvidar [ID]`: Borra un recuerdo específico.\n"
+                            "🔹 `/status`: Muestra CPU y RAM del servidor.\n"
+                            "🔹 `/usuarios`: Muestra los últimos 5 IDs registrados.\n"
+                            "🔹 `/modo [tipo]`: Cambia mi personalidad (serio, sarcastico, profesor...).\n"
+                            "🔹 `/reiniciar`: Borra historial y restablece personalidad.\n"
                             "🔹 `/broadcast [msg]`: Envía un mensaje a todos (Admin).\n"
                             "🔹 `/ayuda`: Muestra este menú.\n\n"
                             "🔹 *Chat normal*: Háblame y te responderé."
@@ -283,24 +370,18 @@ Resultados de Búsqueda:
 
                     # --- CHAT GENERAL (Capa 2: Orquestación) ---
                     elif not reply_text: # Solo si no se ha generado respuesta por un comando anterior
-                        # Estrategia "Memory-First":
-                        # 1. Intentar responder solo con la memoria local. Es más rápido y barato.
-                        print("   🧠 Consultando memoria primero...")
-                        mem_response = run_tool("chat_with_llm.py", ["--prompt", msg, "--memory-only"])
+                        # Estrategia Directa con RAG:
+                        # Enviamos el mensaje al LLM. El script chat_with_llm.py se encarga de
+                        # buscar en la memoria e inyectar el contexto si es relevante.
+                        print("   🤔 Consultando al Agente (con memoria)...")
+                        current_sys = get_current_persona()
+                        llm_response = run_tool("chat_with_llm.py", ["--prompt", msg, "--system", current_sys])
                         
-                        # 2. Si la memoria tiene una respuesta directa, usarla.
-                        if mem_response and "content" in mem_response:
-                            reply_text = mem_response["content"]
+                        if llm_response and "content" in llm_response:
+                            reply_text = llm_response["content"]
                         else:
-                            # 3. Si no, proceder con la consulta normal al LLM (que también usará RAG).
-                            print("   🤔 No hay respuesta directa en memoria, consultando al LLM...")
-                            llm_response = run_tool("chat_with_llm.py", ["--prompt", msg])
-                            
-                            if llm_response and "content" in llm_response:
-                                reply_text = llm_response["content"]
-                            else:
-                                error_msg = llm_response.get('error', 'Respuesta vacía') if llm_response else "Error desconocido"
-                                reply_text = f"⚠️ Error del Modelo: {error_msg}"
+                            error_msg = llm_response.get('error', 'Respuesta vacía') if llm_response else "Error desconocido"
+                            reply_text = f"⚠️ Error del Modelo: {error_msg}"
                     
                     # 3. Enviar respuesta a Telegram
                     if reply_text:
@@ -308,6 +389,19 @@ Resultados de Búsqueda:
                         res = run_tool("telegram_tool.py", ["--action", "send", "--message", reply_text, "--chat-id", sender_id])
                         if res and res.get("status") == "error":
                             print(f"   ❌ Error al enviar mensaje: {res.get('message')}")
+            
+            # --- TAREA DE FONDO: MONITOREO PROACTIVO ---
+            if time.time() - last_health_check > HEALTH_CHECK_INTERVAL:
+                last_health_check = time.time()
+                # Solo el admin (CHAT_ID del .env) recibe alertas técnicas
+                admin_id = os.getenv("TELEGRAM_CHAT_ID")
+                if admin_id:
+                    res = run_tool("monitor_resources.py", [])
+                    if res and res.get("alerts"):
+                        alerts = res.get("alerts", [])
+                        alert_msg = "🚨 *ALERTA DEL SISTEMA:*\n\n" + "\n".join([f"- {a}" for a in alerts])
+                        print(f"   ⚠️ Detectada alerta de sistema. Notificando a {admin_id}...")
+                        run_tool("telegram_tool.py", ["--action", "send", "--message", alert_msg, "--chat-id", admin_id])
             
             # Esperar un poco antes del siguiente chequeo para no saturar la CPU/API
             time.sleep(2)

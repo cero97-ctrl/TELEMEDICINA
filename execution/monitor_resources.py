@@ -25,12 +25,19 @@ def main():
     mem = psutil.virtual_memory()
     mem_usage = mem.percent
 
+    # Medir Disco (Raíz)
+    disk = psutil.disk_usage('/')
+    disk_usage = disk.percent
+
     alerts = []
     if cpu_usage > args.cpu_threshold:
         alerts.append(f"CPU Alto: {cpu_usage}% (Umbral: {args.cpu_threshold}%)")
 
     if mem_usage > args.mem_threshold:
         alerts.append(f"Memoria Alta: {mem_usage}% (Umbral: {args.mem_threshold}%)")
+        
+    if disk_usage > 90.0:
+        alerts.append(f"Disco Casi Lleno: {disk_usage}%")
 
     result = {
         "status": "ok" if not alerts else "warning",
@@ -38,7 +45,10 @@ def main():
             "cpu_percent": cpu_usage,
             "memory_percent": mem_usage,
             "memory_used_gb": round(mem.used / (1024**3), 2),
-            "memory_total_gb": round(mem.total / (1024**3), 2)
+            "memory_total_gb": round(mem.total / (1024**3), 2),
+            "disk_percent": disk_usage,
+            "disk_free_gb": round(disk.free / (1024**3), 2),
+            "disk_total_gb": round(disk.total / (1024**3), 2)
         },
         "alerts": alerts
     }
