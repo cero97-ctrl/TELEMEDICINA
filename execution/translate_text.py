@@ -3,6 +3,10 @@ import argparse
 import os
 import sys
 import json
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
 
 # Añadir el directorio actual al path para importar chat_with_llm
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -28,8 +32,16 @@ def main():
         sys.exit(1)
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        if file_path.lower().endswith(".pdf"):
+            if PdfReader is None:
+                print(json.dumps({"status": "error", "message": "Librería pypdf no instalada."}))
+                sys.exit(1)
+            reader = PdfReader(file_path)
+            content = "\n".join([page.extract_text() for page in reader.pages])
+        else:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
     except Exception as e:
         print(json.dumps({"status": "error", "message": f"Error leyendo archivo: {e}"}))
         sys.exit(1)
@@ -75,6 +87,11 @@ CONTENIDO A TRADUCIR:
 
     # Generar nombre de archivo de salida
     base, ext = os.path.splitext(file_path)
+    
+    # Si era PDF, la salida será texto/markdown
+    if ext.lower() == ".pdf":
+        ext = ".txt"
+        
     # Simplificar el idioma para el nombre del archivo (ej. "Inglés" -> "ingles")
     lang_suffix = target_lang.lower().split()[0]
     output_path = f"{base}_{lang_suffix}{ext}"
@@ -82,10 +99,11 @@ CONTENIDO A TRADUCIR:
     try:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(translated_content.strip())
-        print(f"✅ Archivo traducido guardado en: {output_path}")
-        # Imprimir un poco del contenido para feedback visual
-        print("-" * 40)
-        print(translated_content[:500] + "..." if len(translated_content) > 500 else translated_content)
+        
+        print(json.dumps({
+            "status": "success", 
+            "file_path": output_path
+        }))
     except Exception as e:
         print(json.dumps({"status": "error", "message": f"Error escribiendo archivo: {e}"}))
         sys.exit(1)

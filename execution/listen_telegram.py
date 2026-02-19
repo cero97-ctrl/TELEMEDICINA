@@ -398,6 +398,43 @@ IMPORTANTE:
                             save_reminders(reminders_to_keep)
                             reply_text = "✅ Todos tus recordatorios han sido eliminados."
 
+                    elif msg.startswith("/traducir") or msg.startswith("/translate"):
+                        content = msg.split(" ", 1)[1].strip() if " " in msg else ""
+                        if not content:
+                            reply_text = "⚠️ Uso: /traducir [texto | nombre_archivo]"
+                        else:
+                            # Verificar si es un archivo local (docs o .tmp)
+                            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                            docs_file = os.path.join(base_dir, "docs", content)
+                            tmp_file = os.path.join(base_dir, ".tmp", content)
+                            
+                            target_file = None
+                            if os.path.exists(docs_file): target_file = docs_file
+                            elif os.path.exists(tmp_file): target_file = tmp_file
+                            
+                            if target_file:
+                                print(f"   📄 Traduciendo archivo: {content}")
+                                run_tool("telegram_tool.py", ["--action", "send", "--message", f"⏳ Traduciendo `{content}` al español...", "--chat-id", sender_id])
+                                
+                                res = run_tool("translate_text.py", ["--file", target_file, "--lang", "Español"])
+                                
+                                if res and res.get("status") == "success":
+                                    out_path = res.get("file_path")
+                                    run_tool("telegram_tool.py", ["--action", "send-document", "--file-path", out_path, "--chat-id", sender_id, "--caption", "📄 Traducción al Español"])
+                                    reply_text = "✅ Archivo traducido enviado."
+                                else:
+                                    err = res.get("message", "Error desconocido") if res else "Error en script"
+                                    reply_text = f"❌ Error al traducir archivo: {err}"
+                            else:
+                                # Traducir texto plano
+                                print(f"   🔤 Traduciendo texto...")
+                                prompt = f"Traduce el siguiente texto al Español. Devuelve solo la traducción:\n\n{content}"
+                                llm_res = run_tool("chat_with_llm.py", ["--prompt", prompt])
+                                if llm_res and "content" in llm_res:
+                                    reply_text = f"🇪🇸 *Traducción:*\n\n{llm_res['content']}"
+                                else:
+                                    reply_text = "❌ Error al traducir texto."
+
                     elif msg.startswith("/idioma") or msg.startswith("/lang"):
                         parts = msg.split(" ")
                         if len(parts) < 2:
@@ -630,6 +667,7 @@ IMPORTANTE:
                             "🔹 `/investigar [tema]`: Busca en internet y resume.\n"
                             "🔹 `/reporte [tema]`: Genera un informe médico/técnico detallado en docs/.\n"
                             "🔹 `/recordatorio [hora] [msg]`: Configura una alarma diaria.\n"
+                            "🔹 `/traducir [texto/archivo]`: Traduce al español.\n"
                             "🔹 `/idioma [es/en]`: Cambia el idioma en el que te escucho.\n"
                             "🔹 `/borrar_recordatorios`: Elimina todas tus alarmas.\n"
                             "🔹 `/ayuda_medica`: Envía el manual de uso médico en PDF.\n"

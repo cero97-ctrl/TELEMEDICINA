@@ -9,6 +9,7 @@ PyAudio
 python-dotenv
 gTTS
 pydub
+pypdf
 SpeechRecognition
 PyYAML
 requests
