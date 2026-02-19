@@ -6,6 +6,11 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fork: Proyecto Telemedicina
+- Inicialización del proyecto basado en `PLANTILLA-PROY`.
+- Adaptación de documentación (`README.md`, `instructions.md`) para el dominio médico.
+- Inclusión de manual de usuario en LaTeX (`docs/manual_medico.tex`).
+
 ### Añadido
 - Script `execution/check_system_health.py` para validación de entorno (Python, .env, dependencias).
 - Mejora en `generate_readme.py`: ahora lee los archivos YAML para incluir la descripción (`goal`) de cada directiva en el prompt del LLM.

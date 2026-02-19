@@ -1,8 +1,12 @@
-# [Nombre del Proyecto]
+# Sistema de Telemedicina y Asistencia Médica IA
 
 ## Descripción
-<!-- Proporciona una descripción breve y clara de qué hace este proyecto y qué problema resuelve. -->
-Este proyecto es una implementación basada en el **Gemini Agent Framework**, diseñado para...
+Este proyecto es una plataforma de **Telemedicina y Control Médico Remoto** impulsada por Inteligencia Artificial. Utilizando la arquitectura de 3 capas del *Gemini Agent Framework*, el sistema actúa como un asistente médico avanzado capaz de:
+
+- **Generar reportes médicos** detallados basados en investigación confiable.
+- **Analizar exámenes de laboratorio e informes** en formato PDF.
+- **Interactuar por voz y texto** vía Telegram para acompañamiento de pacientes.
+- **Gestionar memoria a largo plazo** para recordar historiales y preferencias del paciente.
 
 ## Requisitos Previos
 
@@ -37,11 +41,12 @@ Para comenzar un nuevo desarrollo basado en este framework:
 
 ## Uso
 
-<!-- Instrucciones sobre cómo ejecutar el proyecto o interactuar con el agente -->
-Para iniciar el flujo principal:
+Para iniciar el agente médico y conectarlo a Telegram:
 ```bash
-# Ejemplo de comando
-python execution/run_agent.py
+# Iniciar el modo escucha de Telegram
+python execution/listen_telegram.py
+# O para pruebas en consola:
+# python execution/run_agent.py
 ```
 
 ## Arquitectura del Agente
