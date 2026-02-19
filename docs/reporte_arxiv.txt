@@ -1,0 +1,28 @@
+🤖 REPORTE DE INVESTIGACIÓN: LLM AGENTS
+=======================================
+
+📄 TÍTULO: Policy Compiler for Secure Agentic Systems
+🔗 LINK: http://arxiv.org/abs/2602.16708v1
+📝 RESUMEN: LLM-based agents are increasingly being deployed in contexts requiring complex authorization policies: customer service protocols, approval workflows, data access restrictions, and regulatory compliance. Embedding these policies in prompts provides no enforcement guarantees. We present PCAS, a Polic...
+----------------------------------------
+
+📄 TÍTULO: Measuring Mid-2025 LLM-Assistance on Novice Performance in Biology
+🔗 LINK: http://arxiv.org/abs/2602.16703v1
+📝 RESUMEN: Large language models (LLMs) perform strongly on biological benchmarks, raising concerns that they may help novice actors acquire dual-use laboratory skills. Yet, whether this translates to improved human performance in the physical laboratory remains unclear. To address this, we conducted a pre-reg...
+----------------------------------------
+
+📄 TÍTULO: Saliency-Aware Multi-Route Thinking: Revisiting Vision-Language Reasoning
+🔗 LINK: http://arxiv.org/abs/2602.16702v1
+📝 RESUMEN: Vision-language models (VLMs) aim to reason by jointly leveraging visual and textual modalities. While allocating additional inference-time computation has proven effective for large language models (LLMs), achieving similar scaling in VLMs remains challenging. A key obstacle is that visual inputs a...
+----------------------------------------
+
+📄 TÍTULO: Calibrate-Then-Act: Cost-Aware Exploration in LLM Agents
+🔗 LINK: http://arxiv.org/abs/2602.16699v1
+📝 RESUMEN: LLMs are increasingly being used for complex problems which are not necessarily resolved in a single response, but require interacting with an environment to acquire information. In these scenarios, LLMs must reason about inherent cost-uncertainty tradeoffs in when to stop exploring and commit to an...
+----------------------------------------
+
+📄 TÍTULO: Causality is Key for Interpretability Claims to Generalise
+🔗 LINK: http://arxiv.org/abs/2602.16698v1
+📝 RESUMEN: Interpretability research on large language models (LLMs) has yielded important insights into model behaviour, yet recurring pitfalls persist: findings that do not generalise, and causal interpretations that outrun the evidence. Our position is that causal inference specifies what constitutes a vali...
+----------------------------------------
+

@@ -4,11 +4,13 @@ import subprocess
 import json
 import sys
 import os
+import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
 
 USERS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".tmp", "telegram_users.txt")
+REMINDERS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".tmp", "telegram_reminders.json")
 PERSONA_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".tmp", "telegram_persona.txt")
 
 PERSONAS = {
@@ -39,6 +41,39 @@ def save_user(chat_id):
     if str(chat_id) not in users:
         with open(USERS_FILE, 'a') as f:
             f.write(f"{chat_id}\n")
+
+def load_reminders():
+    if os.path.exists(REMINDERS_FILE):
+        try:
+            with open(REMINDERS_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+def save_reminders(reminders):
+    with open(REMINDERS_FILE, 'w') as f:
+        json.dump(reminders, f)
+
+def check_reminders():
+    reminders = load_reminders()
+    if not reminders: return
+
+    now = datetime.datetime.now()
+    current_time = now.strftime("%H:%M")
+    today_str = now.strftime("%Y-%m-%d")
+    updated = False
+
+    for r in reminders:
+        # Si coincide la hora y NO se ha enviado hoy
+        if r.get('time') == current_time and r.get('last_sent') != today_str:
+            print(f"   ⏰ Enviando recordatorio a {r['chat_id']}: {r['message']}")
+            run_tool("telegram_tool.py", ["--action", "send", "--message", f"⏰ *RECORDATORIO:*\n\n{r['message']}", "--chat-id", r['chat_id']])
+            r['last_sent'] = today_str
+            updated = True
+    
+    if updated:
+        save_reminders(reminders)
 
 def run_tool(script, args):
     """Ejecuta una herramienta del framework y devuelve su salida JSON."""
@@ -117,6 +152,70 @@ def main():
                         except Exception as e:
                             reply_text = f"❌ Error procesando foto: {e}"
 
+                    # 1.2 DETECCIÓN DE DOCUMENTOS (PDF)
+                    elif msg.startswith("__DOCUMENT__:"):
+                        try:
+                            parts = msg.replace("__DOCUMENT__:", "").split("|||")
+                            file_id = parts[0]
+                            file_name = parts[1]
+                            caption = parts[2] if len(parts) > 2 else ""
+                            
+                            print(f"   📄 Documento recibido: {file_name}. Descargando...")
+                            run_tool("telegram_tool.py", ["--action", "send", "--message", f"📂 Recibí `{file_name}`. Leyendo contenido...", "--chat-id", sender_id])
+                            
+                            # Descargar a .tmp (que se monta en /mnt/out en el sandbox)
+                            local_path = os.path.join(".tmp", file_name)
+                            run_tool("telegram_tool.py", ["--action", "download", "--file-id", file_id, "--dest", local_path])
+                            
+                            # Extraer texto usando el Sandbox (ya tiene pypdf)
+                            # Nota: .tmp está montado en /mnt/out dentro del contenedor
+                            path_in_sandbox = f"/mnt/out/{file_name}"
+                            
+                            read_code = (
+                                f"from pypdf import PdfReader; "
+                                f"reader = PdfReader('{path_in_sandbox}'); "
+                                f"print('\\n'.join([page.extract_text() for page in reader.pages]))"
+                            )
+                            
+                            res_sandbox = run_tool("run_sandbox.py", ["--code", read_code])
+                            
+                            if res_sandbox and res_sandbox.get("status") == "success":
+                                content = res_sandbox.get("stdout", "")
+                                if len(content) > 15000:
+                                    content = content[:15000] + "... (truncado)"
+                                
+                                if not content.strip():
+                                    reply_text = "⚠️ El documento parece estar vacío o es una imagen escaneada sin texto (OCR no disponible en sandbox)."
+                                else:
+                                    # Analizar con LLM
+                                    analysis_prompt = f"""Actúa como un Asistente Médico experto y empático. Analiza el siguiente informe médico proporcionado por el usuario.
+                                    
+CONTEXTO DEL USUARIO: {caption}
+
+CONTENIDO DEL DOCUMENTO:
+{content}
+
+TAREA:
+1. Resume los hallazgos principales.
+2. Explica los términos técnicos en lenguaje sencillo para un paciente.
+3. Si hay diagnósticos o tratamientos, explícalos brevemente.
+4. IMPORTANTE: Termina con un disclaimer: "Nota: Soy una IA. Este análisis es informativo y no sustituye la opinión de un médico."
+"""
+                                    run_tool("telegram_tool.py", ["--action", "send", "--message", "🧠 Analizando informe médico...", "--chat-id", sender_id])
+                                    
+                                    llm_res = run_tool("chat_with_llm.py", ["--prompt", analysis_prompt])
+                                    
+                                    if llm_res and "content" in llm_res:
+                                        reply_text = llm_res["content"]
+                                    else:
+                                        reply_text = "❌ Error al analizar el documento con la IA."
+                            else:
+                                err = res_sandbox.get("stderr") or res_sandbox.get("message")
+                                reply_text = f"❌ Error leyendo el PDF: {err}"
+
+                        except Exception as e:
+                            reply_text = f"❌ Error procesando documento: {e}"
+
                     # 1.5 DETECCIÓN DE VOZ
                     elif msg.startswith("__VOICE__:"):
                         try:
@@ -179,6 +278,151 @@ Resultados de Búsqueda:
                             else:
                                 reply_text = "❌ Error al ejecutar la herramienta de investigación."
                     
+                    elif msg.startswith("/reporte") or msg.startswith("/report"):
+                        topic = msg.split(" ", 1)[1] if " " in msg else ""
+                        if not topic:
+                            reply_text = "⚠️ Uso: /reporte [tema médico o de investigación]"
+                        else:
+                            print(f"   🏥 Generando reporte sobre: {topic}")
+                            run_tool("telegram_tool.py", ["--action", "send", "--message", f"👩‍⚕️ Iniciando investigación profunda sobre '{topic}'... Esto tomará unos segundos.", "--chat-id", sender_id])
+                            
+                            # 1. Investigar (Search)
+                            # Buscamos específicamente tratamientos y terapias
+                            query = f"tratamientos terapias y recuperación para {topic}"
+                            res_search = run_tool("research_topic.py", ["--query", query, "--output-file", ".tmp/med_research.txt"])
+                            
+                            if res_search and res_search.get("status") == "success":
+                                try:
+                                    with open(".tmp/med_research.txt", "r", encoding="utf-8") as f:
+                                        search_data = f.read()
+                                    
+                                    # 2. Generar Reporte (LLM)
+                                    report_prompt = f"""Actúa como un Asistente Médico de Investigación experto y empático.
+Basado en los siguientes resultados de búsqueda, genera un REPORTE DETALLADO en formato Markdown sobre '{topic}'.
+
+Estructura sugerida:
+1. 📋 Resumen Ejecutivo
+2. 💊 Tratamientos Convencionales
+3. 🧘 Terapias de Rehabilitación y Fisioterapia (Ejercicios recomendados)
+4. ⏱️ Tiempos de Recuperación Estimados
+5. 🏠 Recomendaciones y Cuidados en Casa
+
+RESULTADOS DE BÚSQUEDA:
+{search_data}
+
+IMPORTANTE:
+- Usa un tono profesional pero claro y esperanzador.
+- INCLUYE UN DISCLAIMER AL INICIO: "Nota: Soy una IA. Este reporte es informativo y no sustituye el consejo médico profesional."
+"""
+                                    run_tool("telegram_tool.py", ["--action", "send", "--message", "🧠 Analizando datos y redactando informe...", "--chat-id", sender_id])
+                                    
+                                    # Usamos --memory-query para que busque en memoria solo el tema, no el prompt entero
+                                    llm_res = run_tool("chat_with_llm.py", ["--prompt", report_prompt, "--memory-query", topic])
+                                    
+                                    if llm_res and "content" in llm_res:
+                                        report_content = llm_res["content"]
+                                        
+                                        # 3. Guardar en docs/
+                                        safe_topic = "".join([c if c.isalnum() else "_" for c in topic])[:30]
+                                        filename = f"Reporte_Medico_{safe_topic}.md"
+                                        # Construir ruta absoluta a docs/
+                                        docs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", filename)
+                                        
+                                        with open(docs_path, "w", encoding="utf-8") as f:
+                                            f.write(report_content)
+                                            
+                                        reply_text = f"✅ *Reporte Generado Exitosamente*\n\nHe guardado el informe detallado en:\n`docs/{filename}`\n\nAquí tienes un resumen:\n\n" + report_content[:400] + "...\n\n_(Lee el archivo completo en tu carpeta docs)_"
+                                    else:
+                                        reply_text = "❌ Error al redactar el reporte con el modelo."
+                                        
+                                except Exception as e:
+                                    reply_text = f"❌ Error procesando el reporte: {e}"
+                            else:
+                                reply_text = "❌ Error en la fase de investigación (Búsqueda)."
+
+                    elif msg.startswith("/recordatorio") or msg.startswith("/remind"):
+                        try:
+                            parts = msg.split(" ", 2)
+                            if len(parts) < 3:
+                                reply_text = "⚠️ Uso: /recordatorio HH:MM Mensaje\nEj: `/recordatorio 08:00 Tomar antibiótico`"
+                            else:
+                                time_str = parts[1]
+                                note = parts[2]
+                                # Validar formato de hora
+                                datetime.datetime.strptime(time_str, "%H:%M")
+                                
+                                reminders = load_reminders()
+                                reminders.append({
+                                    "chat_id": str(sender_id),
+                                    "time": time_str,
+                                    "message": note,
+                                    "last_sent": ""
+                                })
+                                save_reminders(reminders)
+                                reply_text = f"✅ Recordatorio configurado.\nTe avisaré todos los días a las {time_str}: '{note}'."
+                        except ValueError:
+                            reply_text = "❌ Hora inválida. Usa formato 24h (HH:MM), ej: 14:30."
+
+                    elif msg.startswith("/borrar_recordatorios") or msg.startswith("/clear_reminders"):
+                        reminders = load_reminders()
+                        # Filtrar, manteniendo solo los recordatorios de OTROS usuarios
+                        reminders_to_keep = [r for r in reminders if r.get('chat_id') != str(sender_id)]
+                        if len(reminders) == len(reminders_to_keep):
+                            reply_text = "🤔 No tienes recordatorios configurados para borrar."
+                        else:
+                            save_reminders(reminders_to_keep)
+                            reply_text = "✅ Todos tus recordatorios han sido eliminados."
+
+                    elif msg.startswith("/ayuda_medica"):
+                        manual_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "manual_medico.pdf")
+                        if os.path.exists(manual_path):
+                            print(f"   🏥 Enviando manual médico a {sender_id}...")
+                            run_tool("telegram_tool.py", ["--action", "send", "--message", "📘 Aquí tienes la guía de uso para tu recuperación.", "--chat-id", sender_id])
+                            run_tool("telegram_tool.py", ["--action", "send-document", "--file-path", manual_path, "--chat-id", sender_id, "--caption", "Manual de Asistente Médico (IA)"])
+                        else:
+                            reply_text = "⚠️ El manual PDF no ha sido generado aún. Pide al administrador que ejecute `pdflatex`."
+
+                    elif msg.startswith("/resumir_archivo") or msg.startswith("/summarize_file"):
+                        filename = msg.split(" ", 1)[1].strip() if " " in msg else ""
+                        if not filename:
+                            reply_text = "⚠️ Uso: /resumir_archivo [nombre_del_archivo_en_docs]"
+                        else:
+                            print(f"   📄 Resumiendo archivo local: {filename}")
+                            run_tool("telegram_tool.py", ["--action", "send", "--message", f"⏳ Leyendo y resumiendo `{filename}`...", "--chat-id", sender_id])
+
+                            # 1. Leer el archivo desde el Sandbox
+                            path_in_container = f"/mnt/docs/{filename}"
+                            
+                            if filename.lower().endswith(".pdf"):
+                                # Código para extraer texto de PDF usando pypdf
+                                read_code = (
+                                    f"from pypdf import PdfReader; "
+                                    f"reader = PdfReader('{path_in_container}'); "
+                                    f"print('\\n'.join([page.extract_text() for page in reader.pages]))"
+                                )
+                            else:
+                                read_code = f"with open('{path_in_container}', 'r', encoding='utf-8') as f: print(f.read())"
+                            
+                            read_res = run_tool("run_sandbox.py", ["--code", read_code])
+
+                            if read_res and read_res.get("status") == "success" and read_res.get("stdout"):
+                                content = read_res.get("stdout")
+                                
+                                if len(content) > 10000:
+                                    content = content[:10000] + "... (truncado)"
+                                
+                                # 2. Enviar a LLM para resumir
+                                prompt = f"Resume el siguiente documento llamado '{filename}':\n\n{content}"
+                                llm_res = run_tool("chat_with_llm.py", ["--prompt", prompt])
+
+                                if llm_res and "content" in llm_res:
+                                    reply_text = llm_res["content"]
+                                else:
+                                    reply_text = "❌ Error generando el resumen."
+                            else:
+                                error_details = read_res.get("stderr") or read_res.get("message", "No se pudo leer el archivo.")
+                                reply_text = f"❌ Error al leer el archivo `{filename}` desde el Sandbox:\n`{error_details}`"
+
                     elif msg.startswith("/resumir") or msg.startswith("/summarize"):
                         url = msg.split(" ", 1)[1] if " " in msg else ""
                         if not url:
@@ -214,7 +458,12 @@ Resultados de Búsqueda:
                                     reply_text = f"❌ Error leyendo contenido: {e}"
                             else:
                                 err = scrape_res.get("message") if scrape_res else "Error desconocido"
-                                reply_text = f"❌ Error leyendo la web: {err}"
+                                # Ayuda contextual si el usuario intenta usar /resumir con un archivo local
+                                if "No scheme supplied" in str(err):
+                                    filename = url.split('/')[-1]
+                                    reply_text = f"🤔 El comando `/resumir` es para URLs (ej: `https://...`).\n\nSi querías resumir el archivo local `{filename}`, el comando correcto es:\n`/resumir_archivo {filename}`"
+                                else:
+                                    reply_text = f"❌ Error leyendo la web: {err}"
 
                     elif msg.startswith("/recordar") or msg.startswith("/remember"):
                         memory_text = msg.split(" ", 1)[1] if " " in msg else ""
@@ -341,7 +590,12 @@ Resultados de Búsqueda:
                         reply_text = (
                             "🤖 *Comandos Disponibles:*\n\n"
                             "🔹 `/investigar [tema]`: Busca en internet y resume.\n"
+                            "🔹 `/reporte [tema]`: Genera un informe médico/técnico detallado en docs/.\n"
+                            "🔹 `/recordatorio [hora] [msg]`: Configura una alarma diaria.\n"
+                            "🔹 `/borrar_recordatorios`: Elimina todas tus alarmas.\n"
+                            "🔹 `/ayuda_medica`: Envía el manual de uso médico en PDF.\n"
                             "🔹 `/resumir [url]`: Lee una web y te dice de qué trata.\n"
+                            "🔹 `/resumir_archivo [nombre]`: Lee un archivo de `docs/` y lo resume.\n"
                             "🔹 `/recordar [dato]`: Guarda una nota en mi memoria.\n"
                             "🔹 `/memorias`: Lista tus últimos recuerdos guardados.\n"
                             "🔹 `/olvidar [ID]`: Borra un recuerdo específico.\n"
@@ -353,6 +607,48 @@ Resultados de Búsqueda:
                             "🔹 `/ayuda`: Muestra este menú.\n\n"
                             "🔹 *Chat normal*: Háblame y te responderé."
                         )
+                    
+                    elif msg.startswith("/py "):
+                        code_to_run = msg.split(" ", 1)[1].strip()
+                        print(f"   🐍 Ejecutando en Sandbox: {code_to_run}")
+
+                        res = run_tool("run_sandbox.py", ["--code", code_to_run])
+
+                        reply_text = "" # Resetear
+                        if res and res.get("status") == "success":
+                            stdout = res.get("stdout", "")
+                            stderr = res.get("stderr", "")
+                            
+                            # --- Manejo de Salida de Archivos ---
+                            sent_file = False
+                            clean_stdout_lines = []
+                            if stdout:
+                                for line in stdout.splitlines():
+                                    potential_path_in_container = line.strip()
+                                    if potential_path_in_container.startswith('/mnt/out/'):
+                                        filename = os.path.basename(potential_path_in_container)
+                                        local_path = os.path.join(".tmp", filename)
+                                        if os.path.exists(local_path):
+                                            print(f"   🖼️  Detectado archivo de salida: {local_path}. Enviando...")
+                                            run_tool("telegram_tool.py", ["--action", "send-photo", "--file-path", local_path, "--chat-id", sender_id, "--caption", "Archivo generado por el Sandbox."])
+                                            sent_file = True
+                                            continue # No añadir esta línea a la respuesta de texto
+                                    clean_stdout_lines.append(line)
+                            
+                            clean_stdout = "\n".join(clean_stdout_lines)
+
+                            # --- Manejo de Salida de Texto ---
+                            text_output_exists = clean_stdout or stderr
+                            if text_output_exists:
+                                reply_text = "📦 *Resultado del Sandbox:*\n\n"
+                                if clean_stdout:
+                                    reply_text += f"*Salida:*\n```\n{clean_stdout}\n```\n"
+                                if stderr:
+                                    reply_text += f"*Errores:*\n```\n{stderr}\n```\n"
+                            elif not sent_file: # No hay salida de texto Y no se envió archivo
+                                reply_text = "📦 *Resultado del Sandbox:*\n\n_El código se ejecutó sin producir salida._"
+                        else:
+                            reply_text = f"❌ *Error en Sandbox:*\n{res.get('message', 'Error desconocido.')}"
 
                     elif msg.lower().strip() in ["hola", "hola!", "hi", "hello", "/start"]:
                         reply_text = (
@@ -390,6 +686,9 @@ Resultados de Búsqueda:
                         if res and res.get("status") == "error":
                             print(f"   ❌ Error al enviar mensaje: {res.get('message')}")
             
+            # --- TAREA DE FONDO: RECORDATORIOS ---
+            check_reminders()
+
             # --- TAREA DE FONDO: MONITOREO PROACTIVO ---
             if time.time() - last_health_check > HEALTH_CHECK_INTERVAL:
                 last_health_check = time.time()

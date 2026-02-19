@@ -1,7 +1,11 @@
 import argparse
 import json
 import sys
+import warnings
 from pathlib import Path
+
+# Suprimir advertencia de cambio de nombre de paquete (duckduckgo_search -> ddgs)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 try:
     from duckduckgo_search import DDGS

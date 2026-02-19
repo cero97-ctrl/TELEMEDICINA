@@ -40,6 +40,48 @@ def send_message(text, target_chat_id=None):
             print(json.dumps({"status": "error", "message": str(e)}))
             sys.exit(1)
 
+def send_photo(file_path, target_chat_id=None, caption=""):
+    """Envía una foto desde una ruta local."""
+    dest_id = target_chat_id or CHAT_ID
+    if not TOKEN or not dest_id:
+        print(json.dumps({"status": "error", "message": "Faltan credenciales o Chat ID destino."}))
+        sys.exit(1)
+    
+    url = f"https://api.telegram.org/bot{TOKEN}/sendPhoto"
+    
+    try:
+        # El archivo se abre en modo binario 'rb'
+        with open(file_path, 'rb') as photo_file:
+            files = {'photo': photo_file}
+            data = {'chat_id': dest_id, 'caption': caption}
+            response = requests.post(url, files=files, data=data, timeout=30) # Timeout aumentado para subidas
+            response.raise_for_status()
+            print(json.dumps({"status": "success", "message": "Foto enviada."}))
+    except Exception as e:
+        print(json.dumps({"status": "error", "message": str(e)}))
+        sys.exit(1)
+
+def send_document(file_path, target_chat_id=None, caption=""):
+    """Envía un documento (PDF, etc.) desde una ruta local."""
+    dest_id = target_chat_id or CHAT_ID
+    if not TOKEN or not dest_id:
+        print(json.dumps({"status": "error", "message": "Faltan credenciales o Chat ID destino."}))
+        sys.exit(1)
+    
+    url = f"https://api.telegram.org/bot{TOKEN}/sendDocument"
+    
+    try:
+        # El archivo se abre en modo binario 'rb'
+        with open(file_path, 'rb') as doc_file:
+            files = {'document': doc_file}
+            data = {'chat_id': dest_id, 'caption': caption}
+            response = requests.post(url, files=files, data=data, timeout=60) # Timeout mayor para docs
+            response.raise_for_status()
+            print(json.dumps({"status": "success", "message": "Documento enviado."}))
+    except Exception as e:
+        print(json.dumps({"status": "error", "message": str(e)}))
+        sys.exit(1)
+
 def check_messages():
     """Consulta nuevos mensajes (polling) manteniendo el estado del offset."""
     if not TOKEN:
@@ -93,6 +135,16 @@ def check_messages():
                     caption = message.get("caption", "") or ""
                     # Usamos un prefijo especial para identificar fotos en el listener
                     messages.append(f"{msg_chat_id}|__PHOTO__:{file_id}|||{caption}")
+                elif message.get("document"):
+                    doc = message["document"]
+                    file_id = doc["file_id"]
+                    file_name = doc.get("file_name", "unknown.pdf")
+                    mime_type = doc.get("mime_type", "")
+                    caption = message.get("caption", "") or ""
+                    
+                    # Solo procesamos PDFs por ahora
+                    if "pdf" in mime_type or file_name.lower().endswith(".pdf"):
+                        messages.append(f"{msg_chat_id}|__DOCUMENT__:{file_id}|||{file_name}|||{caption}")
         
         # Guardar nuevo offset para no repetir mensajes
         if max_update_id > offset:
@@ -178,16 +230,28 @@ def download_file(file_id, dest_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Herramienta de integración con Telegram.")
-    parser.add_argument("--action", choices=["send", "check", "get-id", "download"], required=True, help="Acción a realizar.")
+    parser.add_argument("--action", choices=["send", "check", "get-id", "download", "send-photo", "send-document"], required=True, help="Acción a realizar.")
     parser.add_argument("--message", help="Mensaje a enviar (requerido para --action send).")
     parser.add_argument("--chat-id", help="ID del chat destino (opcional, por defecto usa el del .env).")
     parser.add_argument("--file-id", help="ID del archivo a descargar (para --action download).")
     parser.add_argument("--dest", help="Ruta destino (para --action download).")
+    parser.add_argument("--file-path", help="Ruta del archivo local a enviar (para --action send-photo).")
+    parser.add_argument("--caption", help="Texto para la foto (para --action send-photo).")
     
     args = parser.parse_args()
     
     if args.action == "send":
         send_message(args.message or "Notificación vacía", args.chat_id)
+    elif args.action == "send-photo":
+        if not args.file_path:
+            print(json.dumps({"status": "error", "message": "Falta argumento --file-path"}))
+            sys.exit(1)
+        send_photo(args.file_path, args.chat_id, args.caption or "")
+    elif args.action == "send-document":
+        if not args.file_path:
+            print(json.dumps({"status": "error", "message": "Falta argumento --file-path"}))
+            sys.exit(1)
+        send_document(args.file_path, args.chat_id, args.caption or "")
     elif args.action == "check":
         check_messages()
     elif args.action == "get-id":
