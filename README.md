@@ -110,6 +110,52 @@ Una vez activado el modo escucha (`/telegram` en el CLI), puedes usar:
 - **`/olvidar [ID]`**: Elimina un recuerdo específico usando su ID.
 - **`/ayuda`**: Muestra la lista de comandos disponibles.
 
+### Gestión de Pacientes (Rol Médico)
+- **`/nuevo_paciente [Nombre]`**: Registra un nuevo paciente (ID automático).
+- **`/pacientes`**: Lista todos los pacientes activos.
+- **`/monitorear [ID]`**: Ver signos vitales de un paciente específico.
+- **`/simular_crisis [ID]`**: Provocar una crisis en un paciente específico.
+- **`/estabilizar [ID]`**: Restaurar signos vitales normales.
+
+### Documentación
+En la carpeta `docs/` encontrarás los manuales de usuario (`manual_medico.tex` y `manual_paciente.tex`) listos para compilar a PDF.
+Para generarlos (requiere tener LaTeX instalado):
+```bash
+pdflatex -output-directory=docs docs/manual_medico.tex
+pdflatex -output-directory=docs docs/manual_paciente.tex
+```
+
+## Integración con Hardware (ESP32-CAM)
+El sistema soporta la integración de una cámara ESP32-CAM para dotar al agente de "visión".
+
+### Configuración
+1.  **Firmware**:
+    - **Seguridad WiFi**: No escribas tu contraseña en el código. Agrégala al archivo `.env`:
+      ```env
+      WIFI_SSID=NombreDeTuRed
+      WIFI_PASSWORD=TuContraseña
+      ```
+    - **Sincronización**: Ejecuta el script para generar las credenciales seguras para la cámara:
+      ```bash
+      python execution/sync_wifi_credentials.py
+      ```
+    - **Carga**: Abre el archivo `.ino` (en `execution/` o `firmware/SimpleCamServer/`) con Arduino IDE y súbelo. El código leerá automáticamente las credenciales generadas.
+
+2.  **Conexión**:
+    - Obtén la IP de la cámara desde el Monitor Serie.
+    - Agrégala a tu archivo `.env`:
+      ```env
+      ESP32_CAM_IP=192.168.1.XXX
+      ```
+
+### Notas de Hardware
+- **Alimentación**: Se recomienda usar el pin de **5V**. La placa consume picos de corriente altos; si se reinicia al tomar fotos (error "Brownout"), tu fuente de energía es insuficiente.
+- **Modo Ejecución**: Recuerda desconectar el cable entre `IO0` y `GND` después de subir el código y presionar el botón de **Reset** para iniciar el servidor.
+- **Sin Tarjeta SD**: Este firmware no requiere tarjeta microSD; las imágenes se procesan en la RAM y se envían directamente.
+
+### Uso
+El agente utiliza la directiva `capture_image.yaml` para interactuar con el hardware. Puedes pedirle explícitamente que tome una foto o que analice el entorno visual.
+
 ## Reportar Avances (Git)
 Para guardar tu trabajo y subirlo a GitHub, puedes usar la herramienta de despliegue incluida:
 

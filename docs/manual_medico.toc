@@ -1,0 +1,19 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {section}{\numberline {1}Introducción}{2}{section.1}%
+\contentsline {section}{\numberline {2}Gestión de Pacientes}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Registro de Nuevos Pacientes}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Listado de Pacientes}{2}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Monitoreo y Telemetría}{2}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Ver Signos Vitales}{2}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Historial de Alertas}{2}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Simulación y Control (Entrenamiento)}{3}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Simular Crisis}{3}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Estabilizar Paciente}{3}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Resetear Valores}{3}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Herramientas de Investigación}{3}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Generar Reporte Clínico}{3}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Investigación Rápida}{3}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Análisis de Documentos}{3}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Administración del Sistema}{4}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Estado del Servidor}{4}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Cambio de Rol}{4}{subsection.6.2}%

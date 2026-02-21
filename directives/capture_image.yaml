@@ -1,0 +1,32 @@
+goal: "Capturar una imagen desde un dispositivo ESP32-CAM en la red local."
+version: "1.0"
+
+required_inputs:
+  - name: "camera_ip"
+    description: "La dirección IP del dispositivo ESP32-CAM. Se puede obtener desde .env."
+    type: "string"
+    example: "192.168.1.100"
+
+steps:
+  - step: 1
+    name: "Request Image from Camera"
+    script_to_invoke: "execution/capture_image.py"
+    inputs:
+      - name: "--ip"
+        value: "{{camera_ip}}"
+      - name: "--output-file"
+        value: ".tmp/capture_{{run_id}}.jpg"
+    outputs:
+      - name: "image_path"
+        description: "Ruta al archivo de imagen capturado."
+
+expected_outputs:
+  - name: "saved_image_path"
+    description: "La ruta local donde se guardó la imagen capturada."
+    location: ".tmp/capture_{{run_id}}.jpg"
+
+edge_cases:
+  - case: "El dispositivo no responde o está desconectado."
+    recovery: "El script debe reintentar 2-3 veces con un breve tiempo de espera. Si falla, notificar al usuario que la cámara no está disponible."
+  - case: "La dirección IP no es válida o no está configurada."
+    recovery: "El script debe fallar con un error claro. Notificar al usuario para que verifique la configuración en el archivo .env."

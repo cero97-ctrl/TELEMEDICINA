@@ -21,6 +21,12 @@ try:
 except ImportError:
     chromadb = None
 
+# Intentar importar Pillow para manejo de imágenes
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
+
 # Intentar cargar variables de entorno si python-dotenv está instalado
 try:
     from dotenv import load_dotenv, find_dotenv
@@ -179,7 +185,7 @@ def chat_groq(messages, model="llama-3.3-70b-versatile", system_instruction=None
     except Exception as e:
         return {"error": str(e)}
 
-def chat_gemini(messages, model="gemini-flash-latest", system_instruction=None):
+def chat_gemini(messages, model="gemini-flash-latest", system_instruction=None, image_path=None):
     if not genai:
         return {"error": "Librería 'google-generativeai' no instalada. Ejecuta: pip install -r requirements.txt"}
 
@@ -208,10 +214,26 @@ def chat_gemini(messages, model="gemini-flash-latest", system_instruction=None):
 
         last_message = history.pop()
 
+        # Preparar contenido (Texto + Imagen si existe)
+        content_to_send = last_message["parts"] # Lista actual con el texto
+
+        if image_path:
+            if not Image:
+                return {"error": "Librería 'Pillow' no instalada. Ejecuta: pip install Pillow"}
+            try:
+                img = Image.open(image_path)
+                content_to_send.append(img)
+            except Exception as e:
+                return {"error": f"Error cargando imagen: {e}"}
+
         # Estrategia de Fallback: Intentar modelos alternativos si el principal falla
         models_to_try = [model]
         # Lista de modelos seguros para probar en orden si el principal falla
-        fallbacks = ["gemini-1.5-flash", "gemini-pro"]
+        # Si hay imagen, evitamos gemini-pro (1.0) que es solo texto
+        if image_path:
+            fallbacks = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-latest"]
+        else:
+            fallbacks = ["gemini-1.5-flash", "gemini-pro"]
         for fb in fallbacks:
             if fb != model:
                 models_to_try.append(fb)
@@ -221,7 +243,7 @@ def chat_gemini(messages, model="gemini-flash-latest", system_instruction=None):
             try:
                 model_instance = genai.GenerativeModel(model_name=target_model, system_instruction=sys_msg)
                 chat = model_instance.start_chat(history=history)
-                response = chat.send_message(last_message["parts"][0])
+                response = chat.send_message(content_to_send)
                 return {"content": response.text}
             except Exception as e:
                 print(f"⚠️  Advertencia: Falló {target_model} ({e}). Intentando siguiente...", file=sys.stderr)
@@ -239,6 +261,7 @@ def main():
     parser.add_argument("--prompt", required=True, help="El mensaje para el LLM.")
     parser.add_argument("--provider", choices=["openai", "anthropic", "gemini", "groq"], help="Proveedor de IA.")
     parser.add_argument("--memory-query", help="Texto específico para buscar en memoria (si es diferente al prompt).")
+    parser.add_argument("--image", help="Ruta a una imagen local para analizar (Solo Gemini).")
     parser.add_argument("--memory-only", action="store_true", help="Solo consulta la memoria y devuelve el resultado directo sin llamar al LLM.")
     parser.add_argument("--system", help="Instrucción del sistema (personalidad).")
     args = parser.parse_args()
@@ -324,7 +347,7 @@ PREGUNTA DEL USUARIO:
             elif provider == "groq":
                 result = chat_groq(messages_for_llm, system_instruction=args.system)
             elif provider == "gemini":
-                result = chat_gemini(messages_for_llm, system_instruction=args.system)
+                result = chat_gemini(messages_for_llm, system_instruction=args.system, image_path=args.image)
             
             # Si tuvimos éxito (hay contenido y no error), salimos del bucle
             if "content" in result and "error" not in result:

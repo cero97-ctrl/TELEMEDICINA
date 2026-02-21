@@ -151,76 +151,89 @@ def check_appointments():
     if updated:
         save_appointments(appts)
 
-def load_vitals():
+def load_patients():
+    # Datos iniciales con múltiples pacientes
+    default_patients = {}
+
     if os.path.exists(VITALS_FILE):
         try:
             with open(VITALS_FILE, 'r') as f:
-                return json.load(f)
+                data = json.load(f)
+                # Migración: Si es el formato antiguo (un solo paciente), lo convertimos
+                if "heart_rate" in data:
+                    return {"SIM-001": data}
+                
+                # Safety check para todos los pacientes
+                for pid, v in data.items():
+                    if v.get("spo2", 98) < 90: v["spo2"] = 93
+                return data
         except:
             pass
-    # Valores iniciales normales
-    return {
-        "patient_name": "Juan Pérez (Simulado)",
-        "heart_rate": 75,
-        "temperature": 36.5,
-        "spo2": 98,
-        "systolic": 120,
-        "diastolic": 80,
-        "last_update": time.time(),
-        "last_alert": 0
-    }
+    return default_patients
 
-def save_vitals(data):
+def save_patients(data):
     with open(VITALS_FILE, 'w') as f:
         json.dump(data, f)
 
 def simulate_and_monitor_vitals():
-    vitals = load_vitals()
+    patients = load_patients()
+    updated = False
     
-    # 1. Simulación (Actualizar cada 5 segundos)
-    if time.time() - vitals.get("last_update", 0) > 5:
-        # Fluctuación aleatoria (Random Walk)
-        vitals["heart_rate"] = int(vitals.get("heart_rate", 75) + random.randint(-3, 3))
-        vitals["temperature"] = round(vitals.get("temperature", 36.5) + random.uniform(-0.2, 0.2), 1)
-        vitals["spo2"] = int(vitals.get("spo2", 98) + random.randint(-1, 1))
-        vitals["systolic"] = int(vitals.get("systolic", 120) + random.randint(-2, 2))
-        vitals["diastolic"] = int(vitals.get("diastolic", 80) + random.randint(-2, 2))
-        
-        # Límites fisiológicos (Clamp)
-        vitals["heart_rate"] = max(40, min(180, vitals["heart_rate"]))
-        vitals["temperature"] = max(35.0, min(42.0, vitals["temperature"]))
-        vitals["spo2"] = max(80, min(100, vitals["spo2"]))
-        
-        vitals["last_update"] = time.time()
-        save_vitals(vitals)
-
-    # 2. Monitoreo y Alertas (Solo alertar si ha pasado 30s desde la última para no hacer spam)
-    if time.time() - vitals.get("last_alert", 0) > 30:
-        alerts = []
-        if vitals["heart_rate"] > 110: alerts.append(f"💓 Taquicardia: {vitals['heart_rate']} bpm")
-        if vitals["temperature"] > 38.5: alerts.append(f"🌡️ Fiebre Alta: {vitals['temperature']}°C")
-        if vitals["spo2"] < 92: alerts.append(f"🫁 Hipoxia: {vitals['spo2']}%")
-
-        if alerts:
-            msg = "🚨 *ALERTA DE TELEMETRÍA*\nPaciente: Juan Pérez\n\n" + "\n".join(alerts) + "\n\n_Se requiere revisión médica inmediata._"
+    for pid, vitals in patients.items():
+        # 1. Simulación (Actualizar cada 5 segundos)
+        if time.time() - vitals.get("last_update", 0) > 5:
+            # Homeostasis
+            target_hr, target_temp, target_spo2 = 75, 36.5, 98
             
-            # Guardar en Log Histórico
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            with open(ALERTS_LOG_FILE, 'a') as f:
-                for alert in alerts:
-                    f.write(f"[{timestamp}] {alert}\n")
+            vitals["heart_rate"] = vitals.get("heart_rate", 75) + (target_hr - vitals.get("heart_rate", 75)) * 0.1
+            vitals["temperature"] = vitals.get("temperature", 36.5) + (target_temp - vitals.get("temperature", 36.5)) * 0.1
+            vitals["spo2"] = vitals.get("spo2", 98) + (target_spo2 - vitals.get("spo2", 98)) * 0.2
 
-            # Enviar a todos los médicos registrados
-            if os.path.exists(ROLES_FILE):
-                with open(ROLES_FILE, 'r') as f:
-                    roles = json.load(f)
-                for chat_id, role in roles.items():
-                    if role == "medico":
-                        print(f"   🚨 Enviando alerta médica a {chat_id}...")
-                        run_tool("telegram_tool.py", ["--action", "send", "--message", msg, "--chat-id", chat_id])
+            # Fluctuación aleatoria
+            vitals["heart_rate"] = int(vitals["heart_rate"] + random.randint(-2, 2))
+            vitals["temperature"] = round(vitals["temperature"] + random.uniform(-0.1, 0.1), 1)
+            vitals["spo2"] = int(vitals["spo2"] + random.randint(-1, 1))
+            vitals["systolic"] = int(vitals.get("systolic", 120) + random.randint(-2, 2))
+            vitals["diastolic"] = int(vitals.get("diastolic", 80) + random.randint(-2, 2))
             
-            vitals["last_alert"] = time.time()
-            save_vitals(vitals)
+            # Límites fisiológicos
+            vitals["heart_rate"] = max(40, min(180, vitals["heart_rate"]))
+            vitals["temperature"] = max(35.0, min(42.0, vitals["temperature"]))
+            vitals["spo2"] = max(80, min(100, vitals["spo2"]))
+            
+            vitals["last_update"] = time.time()
+            updated = True
+
+        # 2. Monitoreo y Alertas
+        if time.time() - vitals.get("last_alert", 0) > 30:
+            alerts = []
+            if vitals["heart_rate"] > 110: alerts.append(f"💓 Taquicardia: {vitals['heart_rate']} bpm")
+            if vitals["temperature"] > 38.5: alerts.append(f"🌡️ Fiebre Alta: {vitals['temperature']}°C")
+            if vitals["spo2"] < 92: alerts.append(f"🫁 Hipoxia: {vitals['spo2']}%")
+
+            if alerts:
+                msg = f"🚨 *ALERTA DE TELEMETRÍA*\nPaciente: {vitals.get('name', 'Desconocido')} ({pid})\n\n" + "\n".join(alerts) + "\n\n_Se requiere revisión médica inmediata._"
+                
+                # Guardar en Log Histórico
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                with open(ALERTS_LOG_FILE, 'a') as f:
+                    for alert in alerts:
+                        f.write(f"[{timestamp}] [{pid}] {alert}\n")
+
+                # Enviar a todos los médicos registrados
+                if os.path.exists(ROLES_FILE):
+                    with open(ROLES_FILE, 'r') as f:
+                        roles = json.load(f)
+                    for chat_id, role in roles.items():
+                        if role == "medico":
+                            print(f"   🚨 Enviando alerta médica a {chat_id}...")
+                            run_tool("telegram_tool.py", ["--action", "send", "--message", msg, "--chat-id", chat_id])
+                
+                vitals["last_alert"] = time.time()
+                updated = True
+
+    if updated:
+        save_patients(patients)
 
 def run_tool(script, args):
     """Ejecuta una herramienta del framework y devuelve su salida JSON."""
@@ -878,42 +891,90 @@ Resultados de Búsqueda:
                             if get_role(sender_id) != "medico":
                                 reply_text = "⛔ *Acceso Denegado:* Este comando es exclusivo para personal médico."
                             else:
-                                vitals = load_vitals()
-                                reply_text = (
-                                    "📡 *Telemetría en Tiempo Real*\n"
-                                    f"Paciente: _{vitals.get('patient_name')}_\n\n"
-                                    f"💓 *Ritmo Cardíaco:* {vitals.get('heart_rate')} bpm\n"
-                                    f"🌡️ *Temperatura:* {vitals.get('temperature')}°C\n"
-                                    f"🫁 *SpO2:* {vitals.get('spo2')}%\n"
-                                    f"📉 *Presión:* {vitals.get('systolic')}/{vitals.get('diastolic')} mmHg\n\n"
-                                    f"_Última actualización: Hace {int(time.time() - vitals.get('last_update', 0))}s_"
-                                )
+                                patients = load_patients()
+                                parts = msg_logic.split(" ", 1)
+                                
+                                if len(parts) < 2:
+                                    # Mostrar resumen de todos
+                                    if not patients:
+                                        reply_text = "🏥 No hay pacientes registrados en el sistema."
+                                    else:
+                                        reply_text = "📡 *Pacientes Activos:*\n\n"
+                                        for pid, p in patients.items():
+                                            status = "🟢 Estable"
+                                            if p['heart_rate'] > 100 or p['spo2'] < 94: status = "🔴 Alerta"
+                                            reply_text += f"👤 *{p.get('name')}* (`{pid}`)\n   Estado: {status} | HR: {p['heart_rate']} | SpO2: {p['spo2']}%\n\n"
+                                        reply_text += "Usa `/monitorear [ID]` para ver detalles."
+                                else:
+                                    # Mostrar detalle de uno
+                                    pid = parts[1].strip()
+                                    if pid in patients:
+                                        vitals = patients[pid]
+                                        reply_text = (
+                                            f"📡 *Telemetría: {vitals.get('name')} ({pid})*\n\n"
+                                            f"💓 *Ritmo Cardíaco:* {vitals.get('heart_rate')} bpm\n"
+                                            f"🌡️ *Temperatura:* {vitals.get('temperature')}°C\n"
+                                            f"🫁 *SpO2:* {vitals.get('spo2')}%\n"
+                                            f"📉 *Presión:* {vitals.get('systolic')}/{vitals.get('diastolic')} mmHg\n"
+                                            f"_Última actualización: Hace {int(time.time() - vitals.get('last_update', 0))}s_"
+                                        )
+                                    else:
+                                        reply_text = f"❌ Paciente `{pid}` no encontrado."
 
                         elif msg_logic.startswith("/simular_crisis"):
                             if get_role(sender_id) != "medico":
                                 reply_text = "⛔ Solo médicos pueden ejecutar simulaciones."
                             else:
-                                vitals = load_vitals()
-                                vitals["heart_rate"] = 145
-                                vitals["spo2"] = 88
-                                vitals["temperature"] = 39.2
-                                vitals["last_alert"] = 0 # Resetear timer para forzar alerta inmediata
-                                save_vitals(vitals)
-                                reply_text = "⚠️ *Simulación Iniciada*: Signos vitales alterados artificialmente. Espera la alerta..."
+                                patients = load_patients()
+                                parts = msg_logic.split(" ", 1)
+                                pid = parts[1].strip() if len(parts) > 1 else "SIM-001"
+                                
+                                if pid in patients:
+                                    patients[pid]["heart_rate"] = 145
+                                    patients[pid]["spo2"] = 88
+                                    patients[pid]["temperature"] = 39.2
+                                    patients[pid]["last_alert"] = 0
+                                    save_patients(patients)
+                                    reply_text = f"⚠️ *Simulación Iniciada para {patients[pid]['name']}*: Signos vitales alterados."
+                                else:
+                                    reply_text = f"❌ Paciente `{pid}` no encontrado. Usa `/monitorear` para ver IDs."
 
                         elif msg_logic.startswith("/estabilizar") or msg_logic.startswith("/stabilize"):
                             if get_role(sender_id) != "medico":
                                 reply_text = "⛔ Solo médicos pueden realizar procedimientos de estabilización."
                             else:
-                                vitals = load_vitals()
-                                # Resetear a valores normales
-                                vitals["heart_rate"] = 75
-                                vitals["temperature"] = 36.5
-                                vitals["spo2"] = 98
-                                vitals["systolic"] = 120
-                                vitals["diastolic"] = 80
-                                save_vitals(vitals)
-                                reply_text = "✅ *Paciente Estabilizado*\n\nSe han administrado medicamentos y los signos vitales han vuelto a la normalidad."
+                                patients = load_patients()
+                                parts = msg_logic.split(" ", 1)
+                                pid = parts[1].strip() if len(parts) > 1 else "SIM-001"
+                                
+                                if pid in patients:
+                                    patients[pid]["heart_rate"] = 75
+                                    patients[pid]["temperature"] = 36.5
+                                    patients[pid]["spo2"] = 98
+                                    patients[pid]["systolic"] = 120
+                                    patients[pid]["diastolic"] = 80
+                                    save_patients(patients)
+                                    reply_text = f"✅ *{patients[pid]['name']} Estabilizado/a*."
+                                else:
+                                    reply_text = f"❌ Paciente `{pid}` no encontrado."
+
+                        elif msg_logic.startswith("/paciente_reset") or msg_logic.startswith("/reset_patient"):
+                            if get_role(sender_id) != "medico":
+                                reply_text = "⛔ Solo médicos pueden resetear los valores del paciente."
+                            else:
+                                patients = load_patients()
+                                parts = msg_logic.split(" ", 1)
+                                pid = parts[1].strip() if len(parts) > 1 else "SIM-001"
+                                
+                                if pid in patients:
+                                    patients[pid]["heart_rate"] = 75
+                                    patients[pid]["temperature"] = 36.5
+                                    patients[pid]["spo2"] = 98
+                                    patients[pid]["last_alert"] = 0
+                                    save_patients(patients)
+                                    reply_text = f"🔄 *Valores de {patients[pid]['name']} Reseteados*."
+                                else:
+                                    reply_text = f"❌ Paciente `{pid}` no encontrado."
 
                         elif msg_logic.startswith("/historial_alertas") or msg_logic.startswith("/alert_history"):
                             if get_role(sender_id) != "medico":
@@ -931,17 +992,55 @@ Resultados de Búsqueda:
                                 else:
                                     reply_text = "📋 No hay alertas registradas aún."
 
+                        elif msg_logic.startswith("/nuevo_paciente") or msg_logic.startswith("/ingresar"):
+                            if get_role(sender_id) != "medico":
+                                reply_text = "⛔ Solo médicos pueden registrar pacientes."
+                            else:
+                                patients = load_patients()
+                                args = msg_logic.split(" ", 1)
+                                
+                                if len(args) < 2:
+                                    reply_text = "⚠️ Uso: `/nuevo_paciente [Nombre]` (ID automático) o `/nuevo_paciente [ID] [Nombre]`"
+                                else:
+                                    content = args[1].strip()
+                                    
+                                    # Detectar si el primer término es un ID manual (ej: SIM-005)
+                                    first_word = content.split(" ")[0]
+                                    if first_word.upper().startswith("SIM-") and " " in content:
+                                        new_id = first_word.upper()
+                                        new_name = content.split(" ", 1)[1].strip()
+                                    else:
+                                        # Generar ID automático (SIM-XXX)
+                                        max_n = 0
+                                        for pid in patients:
+                                            if pid.startswith("SIM-"):
+                                                try:
+                                                    n = int(pid.split("-")[1])
+                                                    if n > max_n: max_n = n
+                                                except: pass
+                                        new_id = f"SIM-{max_n + 1:03d}"
+                                        new_name = content
+
+                                    if new_id in patients:
+                                        reply_text = f"⚠️ El paciente con ID `{new_id}` ya existe."
+                                    else:
+                                        # Crear paciente con valores vitales por defecto (estables)
+                                        patients[new_id] = { "name": new_name, "heart_rate": 75, "temperature": 36.5, "spo2": 98, "systolic": 120, "diastolic": 80, "last_update": time.time(), "last_alert": 0 }
+                                        save_patients(patients)
+                                        reply_text = f"✅ *Paciente Registrado*\n\n👤 Nombre: {new_name}\n🆔 ID: `{new_id}`\n\nYa está activo en el sistema de monitoreo."
+
                         elif msg_logic.startswith("/pacientes"):
                             if get_role(sender_id) != "medico":
                                 reply_text = "⛔ Acceso denegado."
                             else:
-                                vitals = load_vitals()
-                                reply_text = (
-                                    "🏥 *Pacientes Activos:*\n\n"
-                                    f"👤 *{vitals.get('patient_name')}*\n"
-                                    f"   Estado: Monitoreo Activo\n"
-                                    f"   ID: SIM-001"
-                                )
+                                patients = load_patients()
+                                if not patients:
+                                    reply_text = "🏥 No hay pacientes registrados."
+                                else:
+                                    reply_text = "🏥 *Lista de Pacientes:*\n\n"
+                                    for pid, p in patients.items():
+                                        reply_text += f"👤 *{p.get('name')}* (ID: `{pid}`)\n"
+                                    reply_text += "\nUsa `/monitorear [ID]` para ver sus signos vitales."
 
                         elif msg_logic.startswith("/ayuda") or msg_logic.startswith("/help"):
                             role = get_role(sender_id)
@@ -950,6 +1049,7 @@ Resultados de Búsqueda:
                                 reply_text = (
                                     "👨‍⚕️ *Panel de Control Médico:*\n\n"
                                     "📡 `/monitorear`: Ver signos vitales de pacientes (Sensores).\n"
+                                    "➕ `/nuevo_paciente`: Registrar nuevo ingreso.\n"
                                     "🔬 `/reporte [tema]`: Generar informe clínico detallado.\n"
                                     "🔍 `/investigar [tema]`: Búsqueda médica avanzada.\n"
                                     "📋 `/historial_alertas`: Ver registro de crisis pasadas.\n"

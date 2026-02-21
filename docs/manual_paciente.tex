@@ -1,0 +1,97 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{graphicx}
+
+% Configuración de márgenes
+\geometry{top=3cm, bottom=3cm, left=2.5cm, right=2.5cm}
+
+% Estilo de títulos
+\titleformat{\section}{\color{green!60!black}\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\color{green!40!black}\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+\title{\textbf{Guía del Paciente: Su Asistente de Salud IA}}
+\author{Sistema de Telemedicina}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Bienvenido}
+Este asistente virtual está diseñado para acompañarle en su proceso de recuperación y control de salud. Puede interactuar con él mediante texto o notas de voz a través de Telegram.
+
+\section{Gestión de Citas}
+
+\subsection{Agendar una Cita}
+Para programar una nueva consulta o revisión:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/cita [DD/MM] [HH:MM] [Motivo]}
+    \item \textbf{Ejemplo:} \texttt{/cita 25/10 15:30 Revisión general}
+\end{itemize}
+
+\subsection{Ver Mis Citas}
+Para consultar sus próximas citas agendadas:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/mis\_citas}
+\end{itemize}
+
+\section{Recordatorios de Medicación}
+
+\subsection{Configurar Alarma}
+El asistente puede recordarle tomar sus medicamentos diariamente:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/recordatorio [HH:MM] [Mensaje]}
+    \item \textbf{Ejemplo:} \texttt{/recordatorio 08:00 Tomar pastilla de la tensión}
+\end{itemize}
+
+\subsection{Borrar Recordatorios}
+Para eliminar todas las alarmas configuradas:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/borrar\_recordatorios}
+\end{itemize}
+
+\section{Herramientas de Asistencia}
+
+\subsection{Análisis de Documentos}
+Si tiene un resultado de laboratorio o informe médico en PDF:
+\begin{enumerate}
+    \item Envíe el archivo PDF al chat.
+    \item El asistente lo leerá y le explicará el contenido en lenguaje sencillo.
+\end{enumerate}
+
+\subsection{Traducción}
+Para traducir documentos médicos o textos a español:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/traducir [texto o nombre de archivo]}
+\end{itemize}
+
+\subsection{Interacción por Voz}
+Puede enviar notas de voz en cualquier momento. El asistente:
+\begin{itemize}
+    \item Transcribirá su mensaje.
+    \item Procesará su consulta.
+    \item Le responderá con texto y también con una nota de voz.
+\end{itemize}
+
+\subsection{Cambiar Idioma}
+Si prefiere interactuar en otro idioma (para la voz):
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/idioma [es/en/fr/pt]}
+    \item \textbf{Ejemplo:} \texttt{/idioma en} (para inglés)
+\end{itemize}
+
+\section{Ayuda}
+Si olvida los comandos, siempre puede solicitar ayuda:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/ayuda}
+    \item \textbf{Manual:} \texttt{/ayuda\_medica} (Le enviará este documento en PDF).
+\end{itemize}
+
+\end{document}

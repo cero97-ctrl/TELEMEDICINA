@@ -2,69 +2,119 @@
 \usepackage[utf8]{inputenc}
 \usepackage[spanish]{babel}
 \usepackage{geometry}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{xcolor}
 \usepackage{titlesec}
+\usepackage{graphicx}
 
 % Configuración de márgenes
 \geometry{top=3cm, bottom=3cm, left=2.5cm, right=2.5cm}
 
 % Estilo de títulos
-\titleformat{\section}{\color{blue}\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\section}{\color{blue!70!black}\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\color{blue!50!black}\normalfont\large\bfseries}{\thesubsection}{1em}{}
 
-\title{\textbf{Guía de Uso: Tu Asistente Médico de IA}}
-\author{Desarrollado por: Prof. César Rodríguez}
+\title{\textbf{Manual de Usuario: Panel Médico IA}}
+\author{Sistema de Telemedicina}
 \date{\today}
 
 \begin{document}
 
 \maketitle
+\tableofcontents
+\newpage
 
-\section*{Introducción}
-Esta guía está diseñada para ayudarte a utilizar tu nuevo \textbf{Asistente de Inteligencia Artificial} a través de Telegram. Este asistente cuenta con herramientas avanzadas para investigar temas médicos, analizar documentos y responder a tus dudas mediante voz o texto, ideal para acompañarte en tu proceso de recuperación.
+\section{Introducción}
+Este manual describe las funcionalidades del Asistente de Telemedicina diseñadas para el personal médico. El sistema permite el monitoreo remoto de signos vitales, gestión de pacientes y acceso a herramientas de investigación clínica.
 
-\section{¿Cómo empezar?}
-Busca el bot en Telegram y presiona \textbf{Iniciar} o escribe \texttt{Hola}. El asistente te saludará y estará listo para ayudarte.
+\section{Gestión de Pacientes}
 
-\section{Herramientas para tu Recuperación}
-
-\subsection{1. Generar Reportes Médicos Detallados}
-Usa el comando \texttt{/reporte} seguido del tema que te interesa. El bot buscará en fuentes confiables y redactará un informe completo con tratamientos, tiempos de recuperación y consejos.
-
-\textbf{Ejemplo de uso:}
-\begin{quote}
-    \texttt{/reporte recuperación fractura de tibia y peroné}
-\end{quote}
-\textit{El bot te enviará un resumen al chat y guardará un documento completo para ti.}
-
-\subsection{2. Analizar Exámenes e Informes (PDF)}
-Si tienes un informe médico o resultado de laboratorio en PDF y quieres entender mejor los términos técnicos:
-\begin{enumerate}
-    \item Envía el archivo \textbf{PDF} al chat de Telegram.
-    \item El bot lo leerá automáticamente.
-    \item Te explicará en lenguaje sencillo qué dice el informe, los hallazgos principales y qué significan.
-\end{enumerate}
-
-\subsection{3. Consultas por Voz}
-Si prefieres no escribir, simplemente envía una \textbf{Nota de Voz}.
+\subsection{Registro de Nuevos Pacientes}
+Para ingresar un nuevo paciente al sistema de monitoreo:
 \begin{itemize}
-    \item Pregunta dudas como: \textit{"¿Qué ejercicios puedo hacer sentada?"} o \textit{"¿Qué alimentos tienen más calcio?"}.
-    \item El bot transcribirá tu audio y te responderá por texto.
+    \item \textbf{Comando:} \texttt{/nuevo\_paciente [Nombre Completo]}
+    \item \textbf{Ejemplo:} \texttt{/nuevo\_paciente Juan Pérez}
+    \item \textbf{Nota:} El sistema asignará automáticamente un ID único (ej. \texttt{SIM-001}). También puede asignar un ID manual: \texttt{/nuevo\_paciente SIM-005 Ana Gómez}.
 \end{itemize}
 
-\subsection{4. Preguntas Rápidas}
-Para dudas puntuales, usa el comando \texttt{/investigar}.
-\begin{quote}
-    \texttt{/investigar efectos secundarios del diclofenac}
-\end{quote}
+\subsection{Listado de Pacientes}
+Para ver todos los pacientes activos:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/pacientes} o \texttt{/monitorear} (sin argumentos).
+\end{itemize}
 
-\section{Aviso de Seguridad}
-Recuerda: \textbf{Soy una Inteligencia Artificial, no un médico.}
-Toda la información que te proporciono es para fines educativos e informativos. Siempre consulta y sigue las instrucciones de tus especialistas médicos para la toma de decisiones sobre tu salud.
+\section{Monitoreo y Telemetría}
 
-\vspace{2cm}
-\begin{center}
-    \textbf{¡Mucho ánimo en tu recuperación!}
-\end{center}
+\subsection{Ver Signos Vitales}
+Para consultar el estado en tiempo real de un paciente específico:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/monitorear [ID]}
+    \item \textbf{Ejemplo:} \texttt{/monitorear SIM-001}
+    \item \textbf{Datos mostrados:} Ritmo cardíaco, Temperatura, SpO2, Presión Arterial.
+\end{itemize}
+
+\subsection{Historial de Alertas}
+Para revisar el registro de crisis pasadas:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/historial\_alertas}
+\end{itemize}
+
+\section{Simulación y Control (Entrenamiento)}
+
+\subsection{Simular Crisis}
+Para fines de prueba o entrenamiento, puede inducir una alteración en los signos vitales:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/simular\_crisis [ID]}
+    \item \textbf{Efecto:} Eleva la frecuencia cardíaca y disminuye la saturación de oxígeno para probar el sistema de alertas.
+\end{itemize}
+
+\subsection{Estabilizar Paciente}
+Para devolver los valores a la normalidad simulando un tratamiento exitoso:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/estabilizar [ID]}
+\end{itemize}
+
+\subsection{Resetear Valores}
+Para forzar un reinicio inmediato de los parámetros fisiológicos:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/paciente\_reset [ID]}
+\end{itemize}
+
+\section{Herramientas de Investigación}
+
+\subsection{Generar Reporte Clínico}
+El agente puede investigar y redactar un informe detallado sobre una patología:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/reporte [tema]}
+    \item \textbf{Ejemplo:} \texttt{/reporte Diabetes Tipo 2 tratamientos modernos}
+    \item \textbf{Salida:} Un archivo Markdown guardado en \texttt{docs/} y un resumen en el chat.
+\end{itemize}
+
+\subsection{Investigación Rápida}
+Para consultas puntuales que requieren búsqueda en internet:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/investigar [tema]}
+\end{itemize}
+
+\subsection{Análisis de Documentos}
+Puede enviar un archivo PDF (historia clínica, paper) y pedir un resumen:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/resumir\_archivo [nombre\_archivo]}
+    \item \textbf{Nota:} El archivo debe estar en la carpeta \texttt{docs/}.
+\end{itemize}
+
+\section{Administración del Sistema}
+
+\subsection{Estado del Servidor}
+Verifique el uso de CPU, RAM y disco del servidor donde corre el agente:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/status}
+\end{itemize}
+
+\subsection{Cambio de Rol}
+Si necesita cambiar a la vista de paciente:
+\begin{itemize}
+    \item \textbf{Comando:} \texttt{/rol paciente}
+\end{itemize}
 
 \end{document}

@@ -27,3 +27,5 @@ backups/
 .idea/
 .DS_Store
 Thumbs.db
+
+execution/wifi_credentials.h

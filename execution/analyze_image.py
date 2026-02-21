@@ -33,8 +33,8 @@ def main():
     try:
         genai.configure(api_key=api_key)
         
-        # Usamos gemini-1.5-flash que es rápido y multimodal
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Usamos gemini-flash-latest que es el alias más estable y compatible
+        model = genai.GenerativeModel('gemini-flash-latest')
         
         img = PIL.Image.open(args.image)
         

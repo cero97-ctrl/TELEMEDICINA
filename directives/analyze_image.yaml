@@ -1,14 +1,32 @@
-goal: "Analizar y describir el contenido de una imagen proporcionada localmente."
+goal: "Analizar una imagen local utilizando visión artificial (Gemini) para describir su contenido o responder preguntas sobre ella."
+version: "1.0"
+
 required_inputs:
   - name: "image_path"
-    description: "Ruta al archivo de imagen."
+    description: "Ruta local al archivo de imagen (.jpg, .png)."
   - name: "prompt"
     description: "Pregunta o instrucción sobre la imagen."
+    default: "Describe detalladamente qué ves en esta imagen, enfocándote en aspectos médicos si los hay."
+
 steps:
   - step: 1
-    script_to_invoke: "execution/analyze_image.py"
+    name: "Analyze Image with Gemini Vision"
+    script_to_invoke: "execution/chat_with_llm.py"
     inputs:
-      - name: "--image"
-        value: "{{image_path}}"
       - name: "--prompt"
         value: "{{prompt}}"
+      - name: "--image"
+        value: "{{image_path}}"
+      - name: "--provider"
+        value: "gemini"
+    outputs:
+      - name: "content"
+        description: "El análisis textual de la imagen."
+
+expected_outputs:
+  - name: "analysis_result"
+    description: "Texto descriptivo generado por la IA."
+
+edge_cases:
+  - case: "La imagen no existe o el formato es inválido."
+    recovery: "El script devolverá un error JSON. Notificar al usuario que verifique la ruta del archivo."
