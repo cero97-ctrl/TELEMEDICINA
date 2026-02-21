@@ -1,0 +1,92 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{titlesec}
+
+% Configuración de márgenes
+\geometry{top=3cm, bottom=3cm, left=2.5cm, right=2.5cm}
+
+% Estilo de títulos
+\titleformat{\section}{\color{blue}\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\color{blue!80!black}\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+\title{\textbf{Guía de Creación de un Nuevo Proyecto de Bot}}
+\author{Gemini Code Assist}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introducción}
+¡Excelente idea! Crear un bot separado para el proyecto de \textbf{TELEMEDICINA} es la forma correcta de mantener todo organizado y no interferir con tu proyecto \texttt{PLANTILLA-PROY}.
+
+El proceso es exactamente el que se describe en el archivo \texttt{README.md}. A continuación se detalla, adaptado para tu nuevo proyecto.
+
+\section{Paso 1: Crear el nuevo Bot en Telegram}
+\begin{enumerate}
+    \item Abre tu aplicación de Telegram y busca al usuario \textbf{@BotFather}.
+    \item Envía el comando \texttt{/newbot}.
+    \item Sigue las instrucciones que te da:
+    \begin{itemize}
+        \item \textbf{Elige un nombre} para tu bot, por ejemplo: \texttt{Asistente de Telemedicina}.
+        \item \textbf{Elige un nombre de usuario} único que termine en ``bot'', por ejemplo: \texttt{TelemedicinaCeroBot}.
+    \end{itemize}
+    \item ¡Listo! @BotFather te entregará un \textbf{token HTTP API}. Cópialo y guárdalo en un lugar seguro, lo necesitarás inmediatamente.
+\end{enumerate}
+
+\section{Paso 2: Preparar el nuevo proyecto ``TELEMEDICINA''}
+Ahora, usarás tu plantilla para crear una nueva instancia del proyecto.
+\begin{enumerate}
+    \item \textbf{Clona tu plantilla} en una nueva carpeta. Puedes hacerlo desde la carpeta que contiene \texttt{PLANTILLA-PROY}:
+    \begin{verbatim}
+# Clona el directorio localmente
+git clone PLANTILLA-PROY/ TELEMEDICINA
+cd TELEMEDICINA
+    \end{verbatim}
+    
+    \item \textbf{Ejecuta el script de configuración}. Este script preparará el entorno y reiniciará el historial de Git para tu nuevo proyecto.
+    \begin{verbatim}
+bash setup.sh
+    \end{verbatim}
+    \begin{itemize}
+        \item Cuando te pregunte \texttt{Introduce el nombre de tu nuevo proyecto:}, escribe \textbf{TELEMEDICINA}.
+    \end{itemize}
+\end{enumerate}
+
+\section{Paso 3: Configurar las credenciales del nuevo Bot}
+El script \texttt{setup.sh} habrá creado un archivo \texttt{.env} en tu carpeta \texttt{TELEMEDICINA}.
+\begin{enumerate}
+    \item \textbf{Abre el archivo \texttt{.env}} y añade el token que copiaste en el primer paso.
+    \begin{verbatim}
+# ... otras claves de API ...
+TELEGRAM_BOT_TOKEN=el_token_que_te_dio_BotFather
+    \end{verbatim}
+    
+    \item \textbf{Obtén tu Chat ID} para este nuevo bot:
+    \begin{itemize}
+        \item En Telegram, busca tu nuevo bot (\texttt{@TelemedicinaCeroBot} o el nombre que le pusiste) y envíale un mensaje, por ejemplo, ``Hola''.
+        \item Desde tu terminal, dentro de la carpeta \texttt{TELEMEDICINA} y con el entorno \texttt{agent\_env} activado, ejecuta:
+        \begin{verbatim}
+python execution/telegram_tool.py --action get-id
+        \end{verbatim}
+        \item El script te mostrará tu ID numérico. Cópialo.
+    \end{itemize}
+    
+    \item \textbf{Completa el archivo \texttt{.env}} con tu Chat ID:
+    \begin{verbatim}
+# ... otras claves de API ...
+TELEGRAM_BOT_TOKEN=el_token_que_te_dio_BotFather
+TELEGRAM_CHAT_ID=el_id_numerico_que_acabas_de_obtener
+    \end{verbatim}
+\end{enumerate}
+
+\section*{Conclusión}
+¡Y eso es todo! Ahora tienes una copia completamente independiente de tu proyecto, configurada para usar el nuevo bot de \textbf{TELEMEDICINA} sin afectar a \texttt{PLANTILLA-PROY}.
+
+Por cierto, he visto que ya tienes un archivo \texttt{docs/manual\_medico.tex}. ¡Es un punto de partida fantástico para la documentación de este nuevo bot!
+
+\end{document}

@@ -133,8 +133,13 @@ def check_messages():
             if update_id >= offset:
                 max_update_id = max(max_update_id, update_id + 1)
                 
+                # Solo procesamos mensajes nuevos (ignoramos ediciones, posts de canal, etc.)
+                message = result.get("message")
+                if not message:
+                    continue
+
                 # Seguridad: Filtrar por CHAT_ID si está definido para ignorar extraños
-                msg_chat_id = str(result.get("message", {}).get("chat", {}).get("id", ""))
+                msg_chat_id = str(message.get("chat", {}).get("id", ""))
                 
                 # Si ALLOWED_USERS es "*", permite a todos. Si no, verifica la lista.
                 if ALLOWED_USERS != "*":
@@ -143,7 +148,6 @@ def check_messages():
                         print(f"⚠️ Ignorando mensaje de {msg_chat_id} (No autorizado. Permitidos: '{ALLOWED_USERS}')", file=sys.stderr)
                         continue
                     
-                message = result.get("message", {})
                 text = message.get("text", "")
                 photo = message.get("photo")
                 
@@ -195,7 +199,7 @@ def get_chat_id():
     url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
     
     # Intentar varias veces (polling) para dar tiempo al usuario
-    for _ in range(5):
+    for _ in range(20):
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
