@@ -15,10 +15,14 @@ def main():
         print("   Por favor agrégalos: WIFI_SSID=mi_wifi y WIFI_PASSWORD=mi_clave")
         sys.exit(1)
         
-    # Ruta del archivo de cabecera C++ (en el mismo directorio que el .ino)
-    # Ajustamos la ruta basándonos en la ubicación de este script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    header_path = os.path.join(script_dir, "wifi_credentials.h")
+    # Ruta del archivo de cabecera C++ (en firmware/SimpleCamServer)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    firmware_dir = os.path.join(base_dir, "firmware", "SimpleCamServer")
+    
+    # Asegurar que el directorio existe
+    os.makedirs(firmware_dir, exist_ok=True)
+    
+    header_path = os.path.join(firmware_dir, "wifi_credentials.h")
     
     content = f"""/**
  * ARCHIVO GENERADO AUTOMÁTICAMENTE DESDE .env

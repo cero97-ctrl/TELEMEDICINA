@@ -14,7 +14,7 @@ except ImportError:
 
 def main():
     parser = argparse.ArgumentParser(description="Monitorear uso de CPU y Memoria.")
-    parser.add_argument("--cpu-threshold", type=float, default=85.0, help="Umbral de alerta para CPU (%)")
+    parser.add_argument("--cpu-threshold", type=float, default=90.0, help="Umbral de alerta para CPU (%)")
     parser.add_argument("--mem-threshold", type=float, default=85.0, help="Umbral de alerta para Memoria (%)")
     args = parser.parse_args()
 

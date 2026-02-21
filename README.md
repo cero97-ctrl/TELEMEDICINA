@@ -114,6 +114,7 @@ Una vez activado el modo escucha (`/telegram` en el CLI), puedes usar:
 - **`/nuevo_paciente [Nombre]`**: Registra un nuevo paciente (ID automático).
 - **`/pacientes`**: Lista todos los pacientes activos.
 - **`/monitorear [ID]`**: Ver signos vitales de un paciente específico.
+- **`/foto`**: Capturar una imagen en tiempo real desde la ESP32-CAM.
 - **`/simular_crisis [ID]`**: Provocar una crisis en un paciente específico.
 - **`/estabilizar [ID]`**: Restaurar signos vitales normales.
 
@@ -139,7 +140,12 @@ El sistema soporta la integración de una cámara ESP32-CAM para dotar al agente
       ```bash
       python execution/sync_wifi_credentials.py
       ```
-    - **Carga**: Abre el archivo `.ino` (en `execution/` o `firmware/SimpleCamServer/`) con Arduino IDE y súbelo. El código leerá automáticamente las credenciales generadas.
+    - **Carga**: Abre el archivo `firmware/SimpleCamServer/SimpleCamServer.ino` con el **Arduino IDE** (versión 2.x recomendada) y súbelo a la placa. El código leerá automáticamente las credenciales generadas.
+      > **Nota para Linux:** Si usas el `.zip` de Arduino IDE, ejecuta el binario `./arduino-ide` desde la terminal. Si tienes errores de permiso en el puerto USB, ejecuta:
+      > ```bash
+      > sudo usermod -a -G dialout $USER
+      > ```
+      > y reinicia tu sesión.
 
 2.  **Conexión**:
     - Obtén la IP de la cámara desde el Monitor Serie.
@@ -152,6 +158,14 @@ El sistema soporta la integración de una cámara ESP32-CAM para dotar al agente
 - **Alimentación**: Se recomienda usar el pin de **5V**. La placa consume picos de corriente altos; si se reinicia al tomar fotos (error "Brownout"), tu fuente de energía es insuficiente.
 - **Modo Ejecución**: Recuerda desconectar el cable entre `IO0` y `GND` después de subir el código y presionar el botón de **Reset** para iniciar el servidor.
 - **Sin Tarjeta SD**: Este firmware no requiere tarjeta microSD; las imágenes se procesan en la RAM y se envían directamente.
+
+### Troubleshooting (Solución de Problemas)
+- **Error `Path ... is not readable` (Linux)**: Tu usuario no tiene permiso para usar el puerto USB.
+  - **Solución Rápida**: Ejecuta `sudo chmod 666 /dev/ttyUSB0` en la terminal.
+  - **Solución Permanente**: Ejecuta `sudo usermod -a -G dialout $USER` y **cierra/abre sesión**.
+- **Otros errores de subida (`exit status 2`)**:
+  - **Modo Programación**: Asegúrate de que el pin `IO0` esté conectado a `GND` antes de subir.
+  - **El Truco del Reset**: Presiona el botón `Reset` de la placa justo cuando el IDE muestre "Connecting...".
 
 ### Uso
 El agente utiliza la directiva `capture_image.yaml` para interactuar con el hardware. Puedes pedirle explícitamente que tome una foto o que analice el entorno visual.

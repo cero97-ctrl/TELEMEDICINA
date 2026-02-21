@@ -28,4 +28,4 @@ backups/
 .DS_Store
 Thumbs.db
 
-execution/wifi_credentials.h
+firmware/SimpleCamServer/wifi_credentials.h

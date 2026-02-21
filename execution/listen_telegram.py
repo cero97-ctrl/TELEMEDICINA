@@ -887,6 +887,31 @@ Resultados de Búsqueda:
                                 else:
                                     reply_text = "⚠️ Rol no reconocido. Usa `medico` o `paciente`."
 
+                        elif msg_logic.startswith("/foto") or msg_logic.startswith("/camara") or msg_logic.startswith("/photo"):
+                            if get_role(sender_id) != "medico":
+                                reply_text = "⛔ *Acceso Denegado:* Solo personal médico puede acceder a la cámara de vigilancia."
+                            else:
+                                cam_ip = os.getenv("ESP32_CAM_IP")
+                                if not cam_ip:
+                                    reply_text = "⚠️ Error de Configuración: La variable `ESP32_CAM_IP` no está definida en el archivo `.env`."
+                                else:
+                                    print(f"   📸 Solicitando foto a {cam_ip}...")
+                                    run_tool("telegram_tool.py", ["--action", "send", "--message", "📸 Conectando con la cámara de aislamiento...", "--chat-id", sender_id])
+                                    
+                                    filename = f"cam_{int(time.time())}.jpg"
+                                    local_path = os.path.join(".tmp", filename)
+                                    
+                                    # Ejecutar script de captura
+                                    res = run_tool("capture_image.py", ["--ip", cam_ip, "--output-file", local_path])
+                                    
+                                    if res and res.get("status") == "success":
+                                        # Enviar foto
+                                        run_tool("telegram_tool.py", ["--action", "send-photo", "--file-path", local_path, "--chat-id", sender_id, "--caption", "Vista en tiempo real del paciente."])
+                                        reply_text = "✅ Captura completada."
+                                    else:
+                                        err = res.get("message", "Error desconocido") if res else "No se pudo conectar con la cámara."
+                                        reply_text = f"❌ Error al capturar imagen: {err}\n\nVerifique que la ESP32-CAM esté encendida y conectada al WiFi."
+
                         elif msg_logic.startswith("/monitorear") or msg_logic.startswith("/monitor"):
                             if get_role(sender_id) != "medico":
                                 reply_text = "⛔ *Acceso Denegado:* Este comando es exclusivo para personal médico."
@@ -1049,6 +1074,7 @@ Resultados de Búsqueda:
                                 reply_text = (
                                     "👨‍⚕️ *Panel de Control Médico:*\n\n"
                                     "📡 `/monitorear`: Ver signos vitales de pacientes (Sensores).\n"
+                                    "📸 `/foto`: Ver cámara en tiempo real.\n"
                                     "➕ `/nuevo_paciente`: Registrar nuevo ingreso.\n"
                                     "🔬 `/reporte [tema]`: Generar informe clínico detallado.\n"
                                     "🔍 `/investigar [tema]`: Búsqueda médica avanzada.\n"
